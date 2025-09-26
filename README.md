@@ -9,6 +9,7 @@
   - [사용자 등록 예제](https://github.com/OUS-KR/ISTP.KR/issues/1)
 - `ISTP.KR/@{사용자 아이디}` 형태의 짧은 주소 지원
   - 사용자 예제: [ISTP.KR/@istp](https://istp.kr/@istp)
+- 부적절한 아이디 (욕설, 관리자 등)는 제한되어 등록 시 삭제
 
 ### [사용자 단축주소 생성](https://github.com/OUS-KR/ISTP.KR/issues/new?template=02-user-short-url-register-by-issue.yml)
 
