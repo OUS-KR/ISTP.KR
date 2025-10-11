@@ -5,10 +5,10 @@
 ### [사용자 등록](https://github.com/OUS-KR/ISTP.KR/issues/new?template=01-user-register-by-issue.yml)
 
 - `ISTP.KR/u/{사용자 아이디}` 주소 기반의 사용자 등록
-  - 사용자 예제: [ISTP.KR/u/istp](https://istp.kr/u/istp)
+  - 사용자 예제: [ISTP.KR/u/istp](https://istp.kr/u/istp), [ISTP.KR/u/tests/](https://istp.kr/u/tests)
   - [사용자 등록 예제](https://github.com/OUS-KR/ISTP.KR/issues/1)
 - `ISTP.KR/@{사용자 아이디}` 형태의 짧은 주소 지원
-  - 사용자 예제: [ISTP.KR/@istp](https://istp.kr/@istp)
+  - 사용자 예제: [ISTP.KR/@istp](https://istp.kr/@istp), [ISTP.KR/@tests](https://istp.kr/@tests)
 - 부적절한 아이디 (욕설, 관리자 등)는 제한되어 등록 시 삭제
 
 ### [사용자 단축주소 생성](https://github.com/OUS-KR/ISTP.KR/issues/new?template=02-user-short-url-register-by-issue.yml)
