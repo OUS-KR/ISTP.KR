@@ -68,5 +68,117 @@
         "description": "미루는 습관을 이기는 법"
       }
     ]
+  },
+  {
+    "mainTitle": "테스트",
+    "items": [
+      {
+        "title": "ISTP 실용적 문제 해결 능력 테스트",
+        "url": "/u/tests/test-practical-problem-solving/",
+        "type": "테스트",
+        "description": "ISTP의 핵심 강점인, 이론보다 실제 경험과 도구를 사용하여 현실적인 문제를 효율적으로 해결하는 능력을 측정합니다."
+      },
+      {
+        "title": "ISTP 연애 스타일 테스트",
+        "url": "/u/tests/test-relationship-style/",
+        "type": "테스트",
+        "description": "ISTP의 연애 스타일 알아보기"
+      },
+      {
+        "title": "ISTP 스트레스 원인 테스트",
+        "url": "/u/tests/test-stress-triggers/",
+        "type": "테스트",
+        "description": "스트레스 원인 진단 테스트"
+      },
+      {
+        "title": "ISTP 도구 및 시스템 이해도 테스트",
+        "url": "/u/tests/test-tool-and-system-understanding/",
+        "type": "테스트",
+        "description": "ISTP의 주기능인 내향 사고(Ti)를 활용하여, 복잡한 기계나 논리적 시스템의 작동 원리를 분석하고 이해하는 능력을 측정합니다."
+      },
+      {
+        "title": "ISTP 빙고 챌린지",
+        "url": "/u/tests/test-bingo/",
+        "type": "테스트",
+        "description": "ISTP 특징으로 구성된 빙고 게임"
+      },
+      {
+        "title": "ISTP 위기 상황 대처 능력 테스트",
+        "url": "/u/tests/test-crisis-response/",
+        "type": "테스트",
+        "description": "긴급하고 예측 불가능한 상황에서 감정적으로 동요하지 않고, 침착하고 논리적으로 최적의 행동을 취하는 ISTP의 능력을 측정합니다."
+      },
+      {
+        "title": "ISTP 효율적 행동 테스트",
+        "url": "/u/tests/test-efficient-action/",
+        "type": "테스트",
+        "description": "ISTP의 최소한의 노력으로 최대의 효과를 내는 효율적인 행동 방식과 실용적인 문제 해결 능력을 측정합니다."
+      }
+    ]
+  },
+  {
+    "mainTitle": "게임",
+    "items": [
+      {
+        "title": "기계 퍼즐",
+        "url": "/u/tests/game-mechanical-puzzle/",
+        "type": "게임",
+        "description": "복잡한 기계 장치의 부품을 조립하고 해체하며, 그 작동 원리를 파악하여 문제를 해결하는 3D 퍼즐 게임입니다."
+      },
+      {
+        "title": "생존 크래프팅 게임",
+        "url": "/u/tests/game-survival-crafting/",
+        "type": "게임",
+        "description": "극한의 환경에서 자원을 수집하고, 도구를 제작하며, 자신만의 생존 전략으로 살아남는 오픈 월드 게임입니다."
+      },
+      {
+        "title": "공학 챌린지",
+        "url": "/u/tests/game-engineering-challenge/",
+        "type": "게임",
+        "description": "다리 건설, 로봇 설계 등 복잡한 공학적 문제를 물리 법칙을 고려하여 창의적이고 효율적으로 해결하는 시뮬레이션 게임입니다."
+      },
+      {
+        "title": "정밀 사격 게임",
+        "url": "/u/tests/game-precision-shooting/",
+        "type": "게임",
+        "description": "다양한 총기를 사용하여, 바람, 거리 등 현실적인 변수를 고려하며 목표물을 맞추는 극사실적인 시뮬레이션 게임입니다."
+      },
+      {
+        "title": "파쿠르 챌린지",
+        "url": "/u/tests/game-parkour-challenge/",
+        "type": "게임",
+        "description": "도시의 지형지물을 활용하여, 가장 빠르고 효율적인 경로를 개척하며 장애물을 극복하는 액션 게임입니다."
+      },
+      {
+        "title": "잠입 액션 게임",
+        "url": "/u/tests/game-stealth-action/",
+        "type": "게임",
+        "description": "적의 감시를 피해, 다양한 도구와 주변 환경을 활용하여 목표를 달성하는 전략적인 잠입 액션 게임입니다."
+      },
+      {
+        "title": "자동차 정비 시뮬레이션",
+        "url": "/u/tests/game-car-mechanic-sim/",
+        "type": "게임",
+        "description": "고장 난 자동차를 분해하고, 부품을 교체하며, 완벽하게 수리해내는 하이퍼리얼리즘 시뮬레이션 게임입니다."
+      },
+      {
+        "title": "해킹 시뮬레이션",
+        "url": "/u/tests/game-hacking-sim/",
+        "type": "게임",
+        "description": "가상의 컴퓨터 시스템에 침투하여, 논리적인 퍼즐을 풀고 보안 시스템을 무력화시키는 전략적인 해킹 게임입니다."
+      },
+      {
+        "title": "음악 기억력 게임",
+        "url": "/u/tests/game-music-memory/",
+        "type": "게임",
+        "description": "음악 기억력 게임"
+      },
+      {
+        "title": "리듬 마스터 게임",
+        "url": "/u/tests/game-rhythm-master/",
+        "type": "게임",
+        "description": "리듬 마스터 게임"
+      }
+    ]
   }
 ]
