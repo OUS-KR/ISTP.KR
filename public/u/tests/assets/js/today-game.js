@@ -42,6 +42,8 @@ function resetGameState() {
         logic: 50,
         efficiency: 50,
         skill: 50,
+        independence: 50,
+        adaptability: 50,
         actionPoints: 10,
         maxActionPoints: 10,
         resources: { parts: 10, materials: 10, energy: 5, rare_components: 0 },
@@ -128,11 +130,13 @@ function renderStats() {
     statsDiv.innerHTML = `
         <p><b>작업:</b> ${gameState.day}일차</p>
         <p><b>집중력:</b> ${gameState.actionPoints}/${gameState.maxActionPoints}</p>
-        <p><b>논리:</b> ${gameState.logic} | <b>효율:</b> ${gameState.efficiency} | <b>기술:</b> ${gameState.skill}</p>
+        <p><b>논리:</b> ${gameState.logic} | <b>효율:</b> ${gameState.efficiency} | <b>기술:</b> ${gameState.skill} | <b>독립성:</b> ${gameState.independence} | <b>적응력:</b> ${gameState.adaptability}</p>
         <p><b>자원:</b> 부품 ${gameState.resources.parts}, 재료 ${gameState.resources.materials}, 에너지 ${gameState.resources.energy}, 희귀 부품 ${gameState.resources.rare_components || 0}</p>
         <p><b>숙련도:</b> ${gameState.masteryLevel}</p>
         <p><b>조수 (${gameState.apprentices.length}/${gameState.maxApprentices}):</b></p>
         <ul>${apprenticeListHtml}</ul>
+        <p><b>구축된 도구:</b></p>
+        <ul>${Object.values(gameState.tools).filter(t => t.built).map(t => `<li>${t.name} (내구도: ${t.durability})</li>`).join('') || '없음'}</ul>
     `;
     const manualDayCounter = document.getElementById('manualDayCounter');
     if(manualDayCounter) manualDayCounter.innerText = gameState.manualDayAdvances;
@@ -196,6 +200,7 @@ const gameScenarios = {
         { text: "프로젝트 검토", action: "review_project" },
         { text: "부품 수집", action: "show_resource_collection_options" },
         { text: "도구 관리", action: "show_facility_options" },
+        { text: "소소한 즐거움", action: "show_small_pleasures_options" },
         { text: "오늘의 미니게임", action: "play_minigame" }
     ]},
     "daily_event_technical_difficulty": {
@@ -225,6 +230,8 @@ const gameScenarios = {
     "game_over_logic": { text: "논리적 오류로 인해 시스템이 붕괴되었습니다.", choices: [], final: true },
     "game_over_efficiency": { text: "효율이 최악입니다. 작업실은 더 이상 돌아가지 않습니다.", choices: [], final: true },
     "game_over_skill": { text: "기술을 모두 잃었습니다. 당신은 더 이상 만능 해결사가 아닙니다.", choices: [], final: true },
+    "game_over_independence": { text: "당신의 독립성이 침해되어 작업실을 떠났습니다. 더 이상 이곳에 머무를 수 없습니다.", choices: [], final: true },
+    "game_over_adaptability": { text: "변화에 적응하지 못하고 작업실은 혼란에 빠졌습니다. 모든 것이 멈췄습니다.", choices: [], final: true },
     "game_over_resources": { text: "모든 부품과 재료가 소진되었습니다.", choices: [], final: true },
     "action_resource_collection": {
         text: "어떤 부품을 수집하시겠습니까?",
@@ -250,6 +257,14 @@ const gameScenarios = {
     "difficulty_resolution_result": {
         text: "",
         choices: [{ text: "확인", action: "return_to_intro" }]
+    },
+    "small_pleasures_menu": {
+        text: "어떤 소소한 즐거움을 찾으시겠습니까?",
+        choices: [
+            { text: "슬롯머신 (집중력 1 소모)", action: "play_slot_machine" },
+            { text: "낚시 (집중력 1 소모)", action: "go_fishing" },
+            { text: "취소", action: "return_to_intro" }
+        ]
     }
 };
 
@@ -601,7 +616,7 @@ const gameActions = {
         let changes = {};
         if (gameState.resources.materials >= cost.materials && gameState.resources.energy >= cost.energy) {
             gameState.tools[facilityKey].durability = 100;
-            message = `${facilityKey} 도구의 수리를 완료했습니다. 내구도가 100으로 회복되었습니다.`;
+            message = `${gameState.tools[facilityKey].name} 도구의 수리를 완료했습니다. 내구도가 100으로 회복되었습니다.`;
             changes.resources = { ...gameState.resources, materials: gameState.resources.materials - cost.materials, energy: gameState.resources.energy - cost.energy };
         } else {
             message = "수리에 필요한 재료가 부족합니다.";
@@ -654,6 +669,51 @@ const gameActions = {
         
         updateGameDisplay(minigame.description);
         minigame.start(document.getElementById('gameArea'), document.getElementById('gameChoices'));
+    },
+    show_small_pleasures_options: () => updateState({ currentScenarioId: 'small_pleasures_menu' }),
+    play_slot_machine: () => {
+        if (!spendActionPoint()) return;
+        let message = "";
+        let changes = {};
+        const rand = currentRandFn();
+
+        if (rand < 0.1) { // Big Win
+            const partsGain = getRandomValue(30, 10);
+            const materialsGain = getRandomValue(20, 5);
+            const energyGain = getRandomValue(15, 5);
+            message = `슬롯머신 대박! 엄청난 자원을 얻었습니다! (+${partsGain} 부품, +${materialsGain} 재료, +${energyGain} 에너지)`;
+            changes.resources = { ...gameState.resources, parts: gameState.resources.parts + partsGain, materials: gameState.resources.materials + materialsGain, energy: gameState.resources.energy + energyGain };
+        } else if (rand < 0.4) { // Small Win
+            const efficiencyGain = getRandomValue(10, 5);
+            message = `슬롯머신 당첨! 작업 효율이 오릅니다. (+${efficiencyGain} 효율)`;
+            changes.efficiency = gameState.efficiency + efficiencyGain;
+        } else if (rand < 0.7) { // Small Loss
+            const efficiencyLoss = getRandomValue(5, 2);
+            message = `아쉽게도 꽝! 작업 효율이 조금 떨어집니다. (-${efficiencyLoss} 효율)`;
+            changes.efficiency = gameState.efficiency - efficiencyLoss;
+        } else { // No Change
+            message = `슬롯머신 결과는 아무것도 아니었습니다.`;
+        }
+        updateState({ ...changes, currentScenarioId: 'small_pleasures_menu' }, message);
+    },
+    go_fishing: () => {
+        if (!spendActionPoint()) return;
+        let message = "";
+        let changes = {};
+        const rand = currentRandFn();
+
+        if (rand < 0.2) { // Big Catch (Rare Component)
+            const rareComponentGain = getRandomValue(3, 1);
+            message = `낚시 대성공! 희귀 부품을 낚았습니다! (+${rareComponentGain} 희귀 부품)`;
+            changes.resources = { ...gameState.resources, rare_components: (gameState.resources.rare_components || 0) + rareComponentGain };
+        } else if (rand < 0.6) { // Normal Catch (Parts)
+            const partsGain = getRandomValue(10, 5);
+            message = `유용한 부품을 낚았습니다! (+${partsGain} 부품)`;
+            changes.resources = { ...gameState.resources, parts: gameState.resources.parts + partsGain };
+        } else { // No Catch
+            message = `아쉽게도 아무것도 낚지 못했습니다.`;
+        }
+        updateState({ ...changes, currentScenarioId: 'small_pleasures_menu' }, message);
     }
 };
 
@@ -739,7 +799,7 @@ function processDailyEvents() {
             facility.durability -= 1;
             if(facility.durability <= 0) {
                 facility.built = false;
-                durabilityMessage += `${key} 도구가 파손되었습니다! 수리가 필요합니다. `; 
+                durabilityMessage += `${facility.name} 도구가 파손되었습니다! 수리가 필요합니다. `; 
             }
         }
     });
