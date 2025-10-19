@@ -89,11 +89,11 @@ function loadGameState() {
         if (!loaded.dailyBonus) loaded.dailyBonus = { craftSuccess: 0 };
         if (!loaded.tools) {
             loaded.tools = {
-                toolbox: { built: false, durability: 100, name: "공구함" },
-                workbench: { built: false, durability: 100, name: "작업대" },
-                blueprintStorage: { built: false, durability: 100, name: "설계도 보관소" },
-                weldingMachine: { built: false, durability: 100, name: "용접기" },
-                cncMachine: { built: false, durability: 100, name: "CNC 머신" }
+                toolbox: { built: false, durability: 100, name: "공구함", description: "기본적인 수리를 위한 필수 도구 세트입니다.", effect_description: "부품 자동 생성 및 기술 보너스." },
+                workbench: { built: false, durability: 100, name: "작업대", description: "본격적인 제작 및 분해 작업을 시작합니다.", effect_description: "재료 생성 및 효율 향상." },
+                blueprintStorage: { built: false, durability: 100, name: "설계도 보관소", description: "복잡한 발명품의 설계도를 보관합니다.", effect_description: "새로운 조수 영입 및 논리 강화." },
+                weldingMachine: { built: false, durability: 100, name: "용접기", description: "금속 부품을 결합하여 더 견고한 장치를 만듭니다.", effect_description: "과거 기록을 통해 스탯 및 자원 획득." },
+                cncMachine: { built: false, durability: 100, name: "CNC 머신", description: "컴퓨터 제어로 정밀한 부품을 가공합니다.", effect_description: "희귀 부품 획득 및 고급 제작 잠금 해제." }
             };
         }
         Object.assign(gameState, loaded);
@@ -480,10 +480,10 @@ function processDailyEvents() {
         const totalWeight = possibleEvents.reduce((sum, event) => sum + event.weight, 0);
         const rand = currentRandFn() * totalWeight;
         let cumulativeWeight = 0;
-        let chosenEvent = possibleEvents.find(event => (cumulativeWeight += event.weight) >= rand);
-        if (chosenEvent) {
-            eventId = chosenEvent.id;
-            if (chosenEvent.onTrigger) chosenEvent.onTrigger();
+        let chosenOutcome = possibleEvents.find(event => (cumulativeWeight += event.weight) >= rand);
+        if (chosenOutcome) {
+            eventId = chosenOutcome.id;
+            if (chosenOutcome.onTrigger) chosenOutcome.onTrigger();
         }
     }
     if (!gameScenarios[gameState.currentScenarioId]) {
