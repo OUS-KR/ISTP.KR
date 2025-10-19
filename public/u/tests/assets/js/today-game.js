@@ -84,20 +84,36 @@ function saveGameState() {
 function loadGameState() {
     const savedState = localStorage.getItem('istpWorkshopGame');
     const today = new Date().toISOString().slice(0, 10);
+
+    resetGameState(); // Initialize gameState with default values
+
     if (savedState) {
         let loaded = JSON.parse(savedState);
-        if (!loaded.dailyBonus) loaded.dailyBonus = { craftSuccess: 0 };
-        if (!loaded.tools) {
-            loaded.tools = {
-                toolbox: { built: false, durability: 100, name: "공구함", description: "기본적인 수리를 위한 필수 도구 세트입니다.", effect_description: "부품 자동 생성 및 기술 보너스." },
-                workbench: { built: false, durability: 100, name: "작업대", description: "본격적인 제작 및 분해 작업을 시작합니다.", effect_description: "재료 생성 및 효율 향상." },
-                blueprintStorage: { built: false, durability: 100, name: "설계도 보관소", description: "복잡한 발명품의 설계도를 보관합니다.", effect_description: "새로운 조수 영입 및 논리 강화." },
-                weldingMachine: { built: false, durability: 100, name: "용접기", description: "금속 부품을 결합하여 더 견고한 장치를 만듭니다.", effect_description: "과거 기록을 통해 스탯 및 자원 획득." },
-                cncMachine: { built: false, durability: 100, name: "CNC 머신", description: "컴퓨터 제어로 정밀한 부품을 가공합니다.", effect_description: "희귀 부품 획득 및 고급 제작 잠금 해제." }
-            };
-        }
+
+        // Merge top-level properties, overwriting defaults with loaded values
         Object.assign(gameState, loaded);
 
+        // Deep merge for nested objects to ensure all sub-properties exist
+        if (loaded.resources && typeof loaded.resources === 'object') {
+            Object.assign(gameState.resources, loaded.resources);
+        }
+        if (loaded.assistants) { // Overwrite if loaded.assistants exists, otherwise keep default
+            gameState.assistants = loaded.assistants;
+        }
+        if (loaded.tools && typeof loaded.tools === 'object') { // Deep merge tools
+            Object.assign(gameState.tools, loaded.tools);
+        }
+
+        // Ensure new stats are initialized if loading old save (redundant with resetGameState() first, but harmless)
+        if (gameState.logic === undefined) gameState.logic = 50;
+        if (gameState.efficiency === undefined) gameState.efficiency = 50;
+        if (gameState.skill === undefined) gameState.skill = 50;
+        if (gameState.adaptation === undefined) gameState.adaptation = 50;
+        if (gameState.concentration === undefined) gameState.concentration = 50;
+        if (gameState.workshopLevel === undefined) gameState.workshopLevel = 0;
+        if (gameState.dailyBonus === undefined) gameState.dailyBonus = { craftSuccess: 0 };
+
+        // Always initialize currentRandFn after loading state
         currentRandFn = mulberry32(getDailySeed() + gameState.day);
 
         if (gameState.lastPlayedDate !== today) {
@@ -108,7 +124,7 @@ function loadGameState() {
             processDailyEvents();
         }
     } else {
-        resetGameState();
+        // If no saved state, resetGameState() was already called, just process daily events
         processDailyEvents();
     }
     renderAll();
@@ -480,10 +496,10 @@ function processDailyEvents() {
         const totalWeight = possibleEvents.reduce((sum, event) => sum + event.weight, 0);
         const rand = currentRandFn() * totalWeight;
         let cumulativeWeight = 0;
-        let chosenOutcome = possibleEvents.find(event => (cumulativeWeight += event.weight) >= rand);
-        if (chosenOutcome) {
-            eventId = chosenOutcome.id;
-            if (chosenOutcome.onTrigger) chosenOutcome.onTrigger();
+        let chosenEvent = possibleEvents.find(event => (cumulativeWeight += event.weight) >= rand);
+        if (chosenEvent) {
+            eventId = chosenEvent.id;
+            if (chosenEvent.onTrigger) chosenEvent.onTrigger();
         }
     }
     if (!gameScenarios[gameState.currentScenarioId]) {
