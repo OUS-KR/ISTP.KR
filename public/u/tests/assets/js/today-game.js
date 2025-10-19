@@ -1,4 +1,4 @@
-// today-game.js - 만능 해결사의 작업실 (The Master Craftsman's Workshop)
+// today-game.js - ISTP - 만능 해결사의 작업실 (The All-Rounder's Workshop)
 
 // --- Utility Functions ---
 function getDailySeed() {
@@ -16,8 +16,14 @@ function mulberry32(seed) {
     }
 }
 
+function getRandomValue(base, variance) {
+    const min = base - variance;
+    const max = base + variance;
+    return Math.floor(currentRandFn() * (max - min + 1)) + min;
+}
+
 function getEulReParticle(word) {
-    if (!word || word.length === 0) return "";
+    if (!word || word.length === 0) return "를";
     const lastChar = word[word.length - 1];
     const uni = lastChar.charCodeAt(0);
     if (uni < 0xAC00 || uni > 0xD7A3) return "를";
@@ -25,7 +31,7 @@ function getEulReParticle(word) {
 }
 
 function getWaGwaParticle(word) {
-    if (!word || word.length === 0) return "";
+    if (!word || word.length === 0) return "와";
     const lastChar = word[word.length - 1];
     const uni = lastChar.charCodeAt(0);
     if (uni < 0xAC00 || uni > 0xD7A3) return "와";
@@ -42,30 +48,30 @@ function resetGameState() {
         logic: 50,
         efficiency: 50,
         skill: 50,
-        independence: 50,
-        adaptability: 50,
-        actionPoints: 10,
+        adaptation: 50,
+        concentration: 50,
+        actionPoints: 10, // Represents '집중력'
         maxActionPoints: 10,
-        resources: { parts: 10, materials: 10, energy: 5, rare_components: 0 },
-        apprentices: [
-            { id: "sparky", name: "스파키", personality: "호기심 많은", skill: "회로 분석", trust: 70 },
-            { id: "gear", name: "기어", personality: "침착한", skill: "기계 조립", trust: 60 }
+        resources: { parts: 10, materials: 10, energy: 5, rare_parts: 0 },
+        assistants: [
+            { id: "macgyver", name: "맥가이버", personality: "호기심 많은", skill: "회로 분석", reliability: 70 },
+            { id: "neo", name: "네오", personality: "침착한", skill: "기계 조립", reliability: 60 }
         ],
-        maxApprentices: 5,
+        maxAssistants: 5,
         currentScenarioId: "intro",
         lastPlayedDate: new Date().toISOString().slice(0, 10),
         manualDayAdvances: 0,
         dailyEventTriggered: false,
         dailyBonus: { craftSuccess: 0 },
-        dailyActions: { tinkered: false, projectReviewed: false, talkedTo: [], minigamePlayed: false },
+        dailyActions: { tinkered: false, reviewed: false, chattedWith: [], minigamePlayed: false },
         tools: {
-            toolbox: { built: false, durability: 100 },
-            workbench: { built: false, durability: 100 },
-            blueprintArchive: { built: false, durability: 100 },
-            weldingMachine: { built: false, durability: 100 },
-            cncMachine: { built: false, durability: 100 }
+            toolbox: { built: false, durability: 100, name: "공구함", description: "기본적인 수리를 위한 필수 도구 세트입니다.", effect_description: "부품 자동 생성 및 기술 보너스." },
+            workbench: { built: false, durability: 100, name: "작업대", description: "본격적인 제작 및 분해 작업을 시작합니다.", effect_description: "재료 생성 및 효율 향상." },
+            blueprintStorage: { built: false, durability: 100, name: "설계도 보관소", description: "복잡한 발명품의 설계도를 보관합니다.", effect_description: "새로운 조수 영입 및 논리 강화." },
+            weldingMachine: { built: false, durability: 100, name: "용접기", description: "금속 부품을 결합하여 더 견고한 장치를 만듭니다.", effect_description: "과거 기록을 통해 스탯 및 자원 획득." },
+            cncMachine: { built: false, durability: 100, name: "CNC 머신", description: "컴퓨터 제어로 정밀한 부품을 가공합니다.", effect_description: "희귀 부품 획득 및 고급 제작 잠금 해제." }
         },
-        masteryLevel: 0,
+        workshopLevel: 0,
         minigameState: {}
     };
     currentRandFn = mulberry32(getDailySeed() + gameState.day);
@@ -81,11 +87,14 @@ function loadGameState() {
     if (savedState) {
         let loaded = JSON.parse(savedState);
         if (!loaded.dailyBonus) loaded.dailyBonus = { craftSuccess: 0 };
-        if (!loaded.apprentices || loaded.apprentices.length === 0) {
-            loaded.apprentices = [
-                { id: "sparky", name: "스파키", personality: "호기심 많은", skill: "회로 분석", trust: 70 },
-                { id: "gear", name: "기어", personality: "침착한", skill: "기계 조립", trust: 60 }
-            ];
+        if (!loaded.tools) {
+            loaded.tools = {
+                toolbox: { built: false, durability: 100, name: "공구함" },
+                workbench: { built: false, durability: 100, name: "작업대" },
+                blueprintStorage: { built: false, durability: 100, name: "설계도 보관소" },
+                weldingMachine: { built: false, durability: 100, name: "용접기" },
+                cncMachine: { built: false, durability: 100, name: "CNC 머신" }
+            };
         }
         Object.assign(gameState, loaded);
 
@@ -126,17 +135,17 @@ function updateGameDisplay(text) {
 function renderStats() {
     const statsDiv = document.getElementById('gameStats');
     if (!statsDiv) return;
-    const apprenticeListHtml = gameState.apprentices.map(a => `<li>${a.name} (${a.skill}) - 신뢰도: ${a.trust}</li>`).join('');
+    const assistantListHtml = gameState.assistants.map(a => `<li>${a.name} (${a.skill}) - 신뢰도: ${a.reliability}</li>`).join('');
     statsDiv.innerHTML = `
-        <p><b>작업:</b> ${gameState.day}일차</p>
+        <p><b>${gameState.day}일차 작업</b></p>
         <p><b>집중력:</b> ${gameState.actionPoints}/${gameState.maxActionPoints}</p>
-        <p><b>논리:</b> ${gameState.logic} | <b>효율:</b> ${gameState.efficiency} | <b>기술:</b> ${gameState.skill} | <b>독립성:</b> ${gameState.independence} | <b>적응력:</b> ${gameState.adaptability}</p>
-        <p><b>자원:</b> 부품 ${gameState.resources.parts}, 재료 ${gameState.resources.materials}, 에너지 ${gameState.resources.energy}, 희귀 부품 ${gameState.resources.rare_components || 0}</p>
-        <p><b>숙련도:</b> ${gameState.masteryLevel}</p>
-        <p><b>조수 (${gameState.apprentices.length}/${gameState.maxApprentices}):</b></p>
-        <ul>${apprenticeListHtml}</ul>
-        <p><b>구축된 도구:</b></p>
-        <ul>${Object.values(gameState.tools).filter(t => t.built).map(t => `<li>${t.name} (내구도: ${t.durability})</li>`).join('') || '없음'}</ul>
+        <p><b>논리:</b> ${gameState.logic} | <b>효율:</b> ${gameState.efficiency} | <b>기술:</b> ${gameState.skill} | <b>적응력:</b> ${gameState.adaptation} | <b>집중력:</b> ${gameState.concentration}</p>
+        <p><b>자원:</b> 부품 ${gameState.resources.parts}, 재료 ${gameState.resources.materials}, 에너지 ${gameState.resources.energy}, 희귀 부품 ${gameState.resources.rare_parts || 0}</p>
+        <p><b>작업실 레벨:</b> ${gameState.workshopLevel}</p>
+        <p><b>나의 조수 (${gameState.assistants.length}/${gameState.maxAssistants}):</b></p>
+        <ul>${assistantListHtml}</ul>
+        <p><b>보유 도구:</b></p>
+        <ul>${Object.values(gameState.tools).filter(t => t.built).map(t => `<li>${t.name} (내구성: ${t.durability})</li>`).join('') || '없음'}</ul>
     `;
     const manualDayCounter = document.getElementById('manualDayCounter');
     if(manualDayCounter) manualDayCounter.innerText = gameState.manualDayAdvances;
@@ -149,19 +158,19 @@ function renderChoices(choices) {
 
     if (gameState.currentScenarioId === 'intro') {
         dynamicChoices = gameScenarios.intro.choices;
-    } else if (gameState.currentScenarioId === 'action_facility_management') {
-        dynamicChoices = gameScenarios.action_facility_management.choices ? [...gameScenarios.action_facility_management.choices] : [];
-        if (!gameState.tools.toolbox.built) dynamicChoices.push({ text: "공구함 정리 (부품 50, 재료 20)", action: "build_toolbox" });
-        if (!gameState.tools.workbench.built) dynamicChoices.push({ text: "작업대 제작 (재료 30, 에너지 30)", action: "build_workbench" });
-        if (!gameState.tools.blueprintArchive.built) dynamicChoices.push({ text: "설계도 보관소 구축 (부품 100, 재료 50, 에너지 50)", action: "build_blueprint_archive" });
-        if (!gameState.tools.weldingMachine.built) dynamicChoices.push({ text: "용접기 도입 (재료 80, 에너지 40)", action: "build_welding_machine" });
-        if (gameState.tools.workbench.built && gameState.tools.workbench.durability > 0 && !gameState.tools.cncMachine.built) {
-            dynamicChoices.push({ text: "CNC 머신 설치 (재료 50, 에너지 100)", action: "build_cnc_machine" });
+    } else if (gameState.currentScenarioId === 'action_tool_management') {
+        dynamicChoices = [];
+        if (!gameState.tools.toolbox.built) dynamicChoices.push({ text: "공구함 구매 (재료 50, 에너지 20)", action: "build_toolbox" });
+        if (!gameState.tools.workbench.built) dynamicChoices.push({ text: "작업대 제작 (에너지 30, 재료 30)", action: "build_workbench" });
+        if (!gameState.tools.blueprintStorage.built) dynamicChoices.push({ text: "설계도 보관소 구축 (재료 100, 에너지 50)", action: "build_blueprintStorage" });
+        if (!gameState.tools.weldingMachine.built) dynamicChoices.push({ text: "용접기 구매 (에너지 80, 재료 40)", action: "build_weldingMachine" });
+        if (gameState.tools.workbench.built && !gameState.tools.cncMachine.built) {
+            dynamicChoices.push({ text: "CNC 머신 설치 (에너지 150, 희귀 부품 5)", action: "build_cncMachine" });
         }
         Object.keys(gameState.tools).forEach(key => {
-            const facility = gameState.tools[key];
-            if (facility.built && facility.durability < 100) {
-                dynamicChoices.push({ text: `${key} 수리 (재료 10, 에너지 10)`, action: "maintain_facility", params: { facility: key } });
+            const tool = gameState.tools[key];
+            if (tool.built && tool.durability < 100) {
+                dynamicChoices.push({ text: `${tool.name} 수리 (에너지 10, 재료 10)`, action: "maintain_tool", params: { tool: key } });
             }
         });
         dynamicChoices.push({ text: "취소", action: "return_to_intro" });
@@ -192,226 +201,102 @@ function renderAll(customDisplayMessage = null) {
     }
 }
 
-// --- Game Data ---
+// --- Game Data (ISTP Themed) ---
 const gameScenarios = {
-    "intro": { text: "오늘의 작업은 무엇입니까?", choices: [
+    "intro": { text: "오늘은 작업실에서 무엇을 할까요?", choices: [
         { text: "작업실 둘러보기", action: "tinker" },
-        { text: "조수와 대화", action: "talk_to_apprentices" },
+        { text: "조수와 대화", action: "chat_with_assistant" },
         { text: "프로젝트 검토", action: "review_project" },
-        { text: "부품 수집", action: "show_resource_collection_options" },
-        { text: "도구 관리", action: "show_facility_options" },
-        { text: "소소한 즐거움", action: "show_small_pleasures_options" },
-        { text: "오늘의 미니게임", action: "play_minigame" }
+        { text: "부품 수집", action: "show_resource_gathering_options" },
+        { text: "도구 관리", action: "show_tool_management_options" },
+        { text: "즉흥 제작", action: "show_impromptu_crafting_options" },
+        { text: "오늘의 과제", action: "play_minigame" }
     ]},
-    "daily_event_technical_difficulty": {
-        text: "새로운 프로젝트에서 예상치 못한 기술적 난제에 부딪혔습니다.",
-        choices: [
-            { text: "밤을 새워 문제를 분석한다.", action: "handle_difficulty", params: { choice: "analyze" } },
-            { text: "기존의 방식을 버리고 새로운 접근법을 시도한다.", action: "handle_difficulty", params: { choice: "improvise" } },
-            { text: "잠시 머리를 식힌다.", action: "ignore_event" }
-        ]
-    },
-    "daily_event_material_defect": { text: "공급받은 재료에 결함이 발견되었습니다. (-10 재료)", choices: [{ text: "확인", action: "return_to_intro" }] },
-    "daily_event_energy_shortage": { text: "작업실의 에너지가 부족하여 일부 장비가 멈췄습니다. (-10 에너지)", choices: [{ text: "확인", action: "return_to_intro" }] },
-    "daily_event_rare_part_offer": {
-        text: "한 상인이 희귀한 부품을 거래하자고 제안합니다. [에너지 50]을 사용하여 [희귀 부품]을 얻을 수 있습니다.",
-        choices: [
-            { text: "거래한다", action: "accept_trade" },
-            { text: "필요 없다", action: "decline_trade" }
-        ]
-    },
-    "daily_event_new_apprentice": {
-        choices: [
-            { text: "그의 손재주를 보고 즉시 받아들인다.", action: "welcome_new_unique_apprentice" },
-            { text: "작업 스타일이 맞는지 지켜본다.", action: "observe_apprentice" },
-            { text: "혼자가 편하다. 거절한다.", action: "reject_apprentice" }
-        ]
-    },
-    "game_over_logic": { text: "논리적 오류로 인해 시스템이 붕괴되었습니다.", choices: [], final: true },
-    "game_over_efficiency": { text: "효율이 최악입니다. 작업실은 더 이상 돌아가지 않습니다.", choices: [], final: true },
-    "game_over_skill": { text: "기술을 모두 잃었습니다. 당신은 더 이상 만능 해결사가 아닙니다.", choices: [], final: true },
-    "game_over_independence": { text: "당신의 독립성이 침해되어 작업실을 떠났습니다. 더 이상 이곳에 머무를 수 없습니다.", choices: [], final: true },
-    "game_over_adaptability": { text: "변화에 적응하지 못하고 작업실은 혼란에 빠졌습니다. 모든 것이 멈췄습니다.", choices: [], final: true },
-    "game_over_resources": { text: "모든 부품과 재료가 소진되었습니다.", choices: [], final: true },
-    "action_resource_collection": {
+    "action_resource_gathering": {
         text: "어떤 부품을 수집하시겠습니까?",
         choices: [
-            { text: "고장난 기계 분해 (부품)", action: "perform_gather_parts" },
-            { text: "재료 탐색 (재료)", action: "perform_find_materials" },
-            { text: "에너지 충전 (에너지)", "action": "perform_charge_energy" },
-            { text: "취소", "action": "return_to_intro" }
-        ]
-    },
-    "action_facility_management": {
-        text: "어떤 도구를 관리하시겠습니까?",
-        choices: []
-    },
-    "resource_collection_result": {
-        text: "",
-        choices: [{ text: "확인", action: "show_resource_collection_options" }]
-    },
-    "facility_management_result": {
-        text: "",
-        choices: [{ text: "확인", action: "show_facility_options" }]
-    },
-    "difficulty_resolution_result": {
-        text: "",
-        choices: [{ text: "확인", action: "return_to_intro" }]
-    },
-    "small_pleasures_menu": {
-        text: "어떤 소소한 즐거움을 찾으시겠습니까?",
-        choices: [
-            { text: "슬롯머신 (집중력 1 소모)", action: "play_slot_machine" },
-            { text: "낚시 (집중력 1 소모)", action: "go_fishing" },
+            { text: "부품 수집", action: "gather_parts" },
+            { text: "재료 가공", action: "process_materials" },
+            { text: "에너지 충전", action: "charge_energy" },
             { text: "취소", action: "return_to_intro" }
         ]
-    }
+    },
+    "action_tool_management": { text: "어떤 도구를 관리하시겠습니까?", choices: [] },
+    "impromptu_crafting_menu": {
+        text: "무엇을 즉흥적으로 제작하시겠습니까?",
+        choices: [
+            { text: "쓸모없는 기계 (집중력 1 소모)", action: "craft_useless_machine" },
+            { text: "드론 개조 (집중력 1 소모)", action: "modify_drone" },
+            { text: "취소", action: "return_to_intro" }
+        ]
+    },
+    // Game Over Scenarios
+    "game_over_logic": { text: "논리적 오류로 작업실에 큰 폭발이 일어났습니다. 모든 것을 잃었습니다.", choices: [], final: true },
+    "game_over_efficiency": { text: "비효율적인 작업 방식으로 인해 모든 프로젝트가 실패했습니다.", choices: [], final: true },
+    "game_over_skill": { text: "기술 부족으로 더 이상 복잡한 장치를 다룰 수 없습니다.", choices: [], final: true },
+    "game_over_resources": { text: "작업실을 운영할 자원이 모두 소진되었습니다.", choices: [], final: true },
 };
 
-function calculateMinigameReward(minigameName, score) {
-    let rewards = { logic: 0, efficiency: 0, skill: 0, message: "" };
+const tinkerOutcomes = [
+    { weight: 30, condition: (gs) => gs.concentration > 60, effect: (gs) => { const v = getRandomValue(10, 5); return { changes: { skill: gs.skill + v }, message: `작업실을 둘러보다 새로운 기술을 연마했습니다! (+${v} 기술)` }; } },
+    { weight: 25, condition: () => true, effect: (gs) => { const v = getRandomValue(5, 2); return { changes: { adaptation: gs.adaptation + v }, message: `예상치 못한 문제를 해결하며 적응력이 상승했습니다. (+${v} 적응력)` }; } },
+    { weight: 20, condition: () => true, effect: (gs) => { const v = getRandomValue(5, 2); return { changes: { resources: { ...gs.resources, parts: gs.resources.parts - v } }, message: `실수로 부품을 잃어버렸습니다. (-${v} 부품)` }; } },
+    { weight: 15, condition: (gs) => gs.concentration < 40, effect: (gs) => { const v = getRandomValue(5, 2); return { changes: { efficiency: gs.efficiency - v }, message: `집중력이 흐트러져 작업 효율이 떨어집니다. (-${v} 효율)` }; } },
+];
 
-    switch (minigameName) {
-        case "기억력 순서 맞추기":
-            if (score >= 51) {
-                rewards.logic = 15;
-                rewards.efficiency = 10;
-                rewards.skill = 5;
-                rewards.message = `완벽한 기억력입니다! 모든 회로도를 기억했습니다. (+15 논리, +10 효율, +5 기술)`;
-            } else if (score >= 21) {
-                rewards.logic = 10;
-                rewards.efficiency = 5;
-                rewards.message = `훌륭한 기억력입니다. (+10 논리, +5 효율)`;
-            } else if (score >= 0) {
-                rewards.logic = 5;
-                rewards.message = `훈련을 완료했습니다. (+5 논리)`;
-            } else {
-                rewards.message = `훈련을 완료했지만, 아쉽게도 보상은 없습니다.`;
-            }
-            break;
-        case "회로 연결하기":
-            rewards.logic = 10;
-            rewards.message = `완벽한 회로입니다! (+10 논리)`;
-            break;
-        case "엔진 수리":
-            rewards.skill = 10;
-            rewards.message = `엔진을 완벽하게 수리했습니다. (+10 기술)`;
-            break;
-        case "잠금 해제":
-            rewards.efficiency = 10;
-            rewards.message = `최단 시간 안에 잠금을 해제했습니다. (+10 효율)`;
-            break;
-        case "폭탄 해체":
-            rewards.logic = 5;
-            rewards.skill = 5;
-            rewards.message = `침착하게 폭탄을 해체했습니다. (+5 논리, +5 기술)`;
-            break;
-        default:
-            rewards.message = `미니게임 ${minigameName}을(를) 완료했습니다.`;
-            break;
-    }
-    return rewards;
-}
+const chatOutcomes = [
+    { weight: 40, condition: (gs, assistant) => assistant.reliability < 80, effect: (gs, assistant) => { const v = getRandomValue(10, 5); const updated = gs.assistants.map(a => a.id === assistant.id ? { ...a, reliability: Math.min(100, a.reliability + v) } : a); return { changes: { assistants: updated }, message: `${assistant.name}${getWaGwaParticle(assistant.name)}의 실용적인 대화로 신뢰도가 상승했습니다. (+${v} 신뢰도)` }; } },
+    { weight: 30, condition: () => true, effect: (gs, assistant) => { const v = getRandomValue(5, 2); return { changes: { logic: gs.logic + v }, message: `${assistant.name}에게서 문제 해결의 실마리를 얻었습니다. (+${v} 논리)` }; } },
+    { weight: 20, condition: (gs) => gs.efficiency < 40, effect: (gs, assistant) => { const v = getRandomValue(10, 3); const updated = gs.assistants.map(a => a.id === assistant.id ? { ...a, reliability: Math.max(0, a.reliability - v) } : a); return { changes: { assistants: updated }, message: `당신의 비효율적인 지시에 ${assistant.name}이(가) 불만을 표합니다. (-${v} 신뢰도)` }; } },
+];
+
+const reviewOutcomes = [
+    { weight: 40, condition: (gs) => gs.logic > 60, effect: (gs) => { const v = getRandomValue(10, 3); return { changes: { efficiency: gs.efficiency + v }, message: `프로젝트의 논리적 허점을 발견하여 효율성을 개선했습니다. (+${v} 효율)` }; } },
+    { weight: 30, condition: () => true, effect: (gs) => { const v = getRandomValue(10, 3); return { changes: { skill: gs.skill + v }, message: `프로젝트를 검토하며 새로운 기술을 습득했습니다. (+${v} 기술)` }; } },
+    { weight: 20, condition: (gs) => gs.concentration < 40, effect: (gs) => { const v = getRandomValue(10, 4); return { changes: { adaptation: gs.adaptation - v }, message: `집중력 부족으로 프로젝트의 중요한 부분을 놓쳤습니다. (-${v} 적응력)` }; } },
+];
 
 const minigames = [
     {
-        name: "기억력 순서 맞추기",
-        description: "화면에 나타나는 회로도 순서를 기억하고 정확하게 입력하세요. 단계가 올라갈수록 어려워집니다!",
+        name: "회로 연결하기",
+        description: "끊어진 회로를 올바르게 연결하여 장치를 작동시키세요.",
         start: (gameArea, choicesDiv) => {
-            gameState.minigameState = { currentSequence: [], playerInput: [], stage: 1, score: 0, showingSequence: false };
+            gameState.minigameState = { score: 0, connections: [false, false, false], solution: [true, true, true] };
             minigames[0].render(gameArea, choicesDiv);
-            minigames[0].showSequence();
         },
         render: (gameArea, choicesDiv) => {
-            gameArea.innerHTML = `
-                <p><b>단계:</b> ${gameState.minigameState.stage} | <b>점수:</b> ${gameState.minigameState.score}</p>
-                <p id="sequenceDisplay" style="font-size: 2em; font-weight: bold; min-height: 1.5em;"></p>
-                <p>순서를 기억하고 입력하세요:</p>
-                <div id="playerInputDisplay" style="font-size: 1.5em; min-height: 1.5em;">${gameState.minigameState.playerInput.join(' ')}</div>
-            `;
-            choicesDiv.innerHTML = `
-                <div class="number-pad">
-                    ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => `<button class="choice-btn num-btn" data-value="${num}">${num}</button>`).join('')}
-                    <button class="choice-btn num-btn" data-value="0">0</button>
-                    <button class="choice-btn submit-btn" data-action="submitSequence">입력 완료</button>
-                    <button class="choice-btn reset-btn" data-action="resetInput">초기화</button>
-                </div>
-            `;
-            choicesDiv.querySelectorAll('.num-btn').forEach(button => {
-                button.addEventListener('click', () => minigames[0].processAction('addInput', button.dataset.value));
-            });
-            choicesDiv.querySelector('.submit-btn').addEventListener('click', () => minigames[0].processAction('submitSequence'));
-            choicesDiv.querySelector('.reset-btn').addEventListener('click', () => minigames[0].processAction('resetInput'));
+            const state = gameState.minigameState;
+            gameArea.innerHTML = `<p>${minigames[0].description}</p><div id="circuit-board">${state.connections.map((c, i) => `<div class="wire ${c ? 'connected' : ''}" data-index="${i}"></div>`).join('')}</div>`;
+            choicesDiv.innerHTML = ``;
+            gameArea.querySelectorAll('.wire').forEach(wire => wire.addEventListener('click', () => minigames[0].processAction('toggle_wire', parseInt(wire.dataset.index))));
         },
-        showSequence: () => {
-            gameState.minigameState.showingSequence = true;
-            gameState.minigameState.currentSequence = [];
-            const sequenceLength = gameState.minigameState.stage + 2;
-            for (let i = 0; i < sequenceLength; i++) {
-                gameState.minigameState.currentSequence.push(Math.floor(currentRandFn() * 10));
-            }
-
-            const sequenceDisplay = document.getElementById('sequenceDisplay');
-            let i = 0;
-            const interval = setInterval(() => {
-                if (i < gameState.minigameState.currentSequence.length) {
-                    sequenceDisplay.innerText = gameState.minigameState.currentSequence[i];
-                    i++;
-                } else {
-                    clearInterval(interval);
-                    sequenceDisplay.innerText = "입력하세요!";
-                    gameState.minigameState.showingSequence = false;
-                }
-            }, 800);
-        },
-        processAction: (actionType, value = null) => {
-            if (gameState.minigameState.showingSequence) return;
-
-            if (actionType === 'addInput') {
-                gameState.minigameState.playerInput.push(parseInt(value));
-                document.getElementById('playerInputDisplay').innerText = gameState.minigameState.playerInput.join(' ');
-            } else if (actionType === 'resetInput') {
-                gameState.minigameState.playerInput = [];
-                document.getElementById('playerInputDisplay').innerText = '';
-            } else if (actionType === 'submitSequence') {
-                const correct = gameState.minigameState.currentSequence.every((num, i) => num === gameState.minigameState.playerInput[i]);
-
-                if (correct && gameState.minigameState.playerInput.length === gameState.minigameState.currentSequence.length) {
-                    gameState.minigameState.score += gameState.minigameState.currentSequence.length * 10;
-                    gameState.minigameState.stage++;
-                    gameState.minigameState.playerInput = [];
-                    updateGameDisplay("정답입니다! 다음 단계로 넘어갑니다.");
-                    minigames[0].render(document.getElementById('gameArea'), document.getElementById('gameChoices'));
-                    setTimeout(() => minigames[0].showSequence(), 1500);
-                } else {
-                    updateGameDisplay("오답입니다. 게임 종료.");
+        processAction: (actionType, value) => {
+            if (actionType === 'toggle_wire') {
+                const state = gameState.minigameState;
+                state.connections[value] = !state.connections[value];
+                minigames[0].render(document.getElementById('gameArea'), document.getElementById('gameChoices'));
+                if (state.connections.every((v, i) => v === state.solution[i])) {
+                    state.score = 100;
                     minigames[0].end();
                 }
             }
         },
         end: () => {
             const rewards = calculateMinigameReward(minigames[0].name, gameState.minigameState.score);
-            updateState({
-                logic: gameState.logic + rewards.logic,
-                efficiency: gameState.efficiency + rewards.efficiency,
-                skill: gameState.skill + rewards.skill,
-                currentScenarioId: 'intro'
-            }, rewards.message);
-            gameState.minigameState = {};
+            updateState({ logic: gameState.logic + rewards.logic, skill: gameState.skill + rewards.skill, currentScenarioId: 'intro' }, rewards.message);
         }
     },
-    { name: "회로 연결하기", description: "끊어진 회로를 논리적으로 연결하여 시스템을 복구하세요.", start: (ga, cd) => { ga.innerHTML = "<p>회로 연결하기 - 개발 중</p>"; cd.innerHTML = "<button class='choice-btn' onclick='minigames[1].end()'>종료</button>"; gameState.minigameState = { score: 10 }; }, render: () => {}, processAction: () => {}, end: () => { const r = calculateMinigameReward(minigames[1].name, gameState.minigameState.score); updateState({ logic: gameState.logic + r.logic, efficiency: gameState.efficiency + r.efficiency, skill: gameState.skill + r.skill, currentScenarioId: 'intro' }, r.message); gameState.minigameState = {}; } },
-    { name: "엔진 수리", description: "고장난 엔진의 부품을 교체하고 수리하여 다시 작동시키세요.", start: (ga, cd) => { ga.innerHTML = "<p>엔진 수리 - 개발 중</p>"; cd.innerHTML = "<button class='choice-btn' onclick='minigames[2].end()'>종료</button>"; gameState.minigameState = { score: 15 }; }, render: () => {}, processAction: () => {}, end: () => { const r = calculateMinigameReward(minigames[2].name, gameState.minigameState.score); updateState({ logic: gameState.logic + r.logic, efficiency: gameState.efficiency + r.efficiency, skill: gameState.skill + r.skill, currentScenarioId: 'intro' }, r.message); gameState.minigameState = {}; } },
-    { name: "잠금 해제", description: "복잡한 잠금 장치를 최단 시간 안에 해제하세요.", start: (ga, cd) => { ga.innerHTML = "<p>잠금 해제 - 개발 중</p>"; cd.innerHTML = "<button class='choice-btn' onclick='minigames[3].end()'>종료</button>"; gameState.minigameState = { score: 20 }; }, render: () => {}, processAction: () => {}, end: () => { const r = calculateMinigameReward(minigames[3].name, gameState.minigameState.score); updateState({ logic: gameState.logic + r.logic, efficiency: gameState.efficiency + r.efficiency, skill: gameState.skill + r.skill, currentScenarioId: 'intro' }, r.message); gameState.minigameState = {}; } },
-    { name: "폭탄 해체", description: "제한 시간 안에 폭탄을 안전하게 해체하세요.", start: (ga, cd) => { ga.innerHTML = "<p>폭탄 해체 - 개발 중</p>"; cd.innerHTML = "<button class='choice-btn' onclick='minigames[4].end()'>종료</button>"; gameState.minigameState = { score: 25 }; }, render: () => {}, processAction: () => {}, end: () => { const r = calculateMinigameReward(minigames[4].name, gameState.minigameState.score); updateState({ logic: gameState.logic + r.logic, efficiency: gameState.efficiency + r.efficiency, skill: gameState.skill + r.skill, currentScenarioId: 'intro' }, r.message); gameState.minigameState = {}; } }
 ];
 
-// --- Game Actions ---
+function calculateMinigameReward(minigameName, score) {
+    let rewards = { logic: 0, skill: 0, message: "" };
+    if (score >= 100) { rewards.logic = 15; rewards.skill = 10; rewards.message = `완벽한 회로입니다! (+15 논리, +10 기술)`; } 
+    else { rewards.logic = 5; rewards.message = `회로를 연결했습니다. (+5 논리)`; }
+    return rewards;
+}
+
 function spendActionPoint() {
-    if (gameState.actionPoints <= 0) {
-        updateGameDisplay("집중력이 부족합니다.");
-        return false;
-    }
+    if (gameState.actionPoints <= 0) { updateGameDisplay("집중력이 부족합니다."); return false; }
     updateState({ actionPoints: gameState.actionPoints - 1 });
     return true;
 }
@@ -419,415 +304,193 @@ function spendActionPoint() {
 const gameActions = {
     tinker: () => {
         if (!spendActionPoint()) return;
-        if (gameState.dailyActions.tinkered) { updateState({ dailyActions: { ...gameState.dailyActions, tinkered: true } }, "오늘은 이미 충분히 작업했습니다."); return; }
-        
-        let changes = { dailyActions: { ...gameState.dailyActions, tinkered: true } };
-        let message = "작업실을 둘러보며 이것저것 만져봅니다.";
-        const rand = currentRandFn();
-        if (rand < 0.3) { message += " 유용한 부품을 발견했습니다. (+2 부품)"; changes.resources = { ...gameState.resources, parts: gameState.resources.parts + 2 }; }
-        else if (rand < 0.6) { message += " 새로운 도구 아이디어가 떠올랐습니다. (+2 기술)"; changes.skill = gameState.skill + 2; }
-        else { message += " 특별한 것은 발견하지 못했습니다."; }
-        
-        updateState(changes, message);
+        const possibleOutcomes = tinkerOutcomes.filter(o => !o.condition || o.condition(gameState));
+        const totalWeight = possibleOutcomes.reduce((sum, o) => sum + o.weight, 0);
+        const rand = currentRandFn() * totalWeight;
+        let cumulativeWeight = 0;
+        let chosenOutcome = possibleOutcomes.find(o => (cumulativeWeight += o.weight) >= rand) || possibleOutcomes[0];
+        const result = chosenOutcome.effect(gameState);
+        updateState(result.changes, result.message);
     },
-    talk_to_apprentices: () => {
+    chat_with_assistant: () => {
         if (!spendActionPoint()) return;
-        const apprentice = gameState.apprentices[Math.floor(currentRandFn() * gameState.apprentices.length)];
-        if (gameState.dailyActions.talkedTo.includes(apprentice.id)) { updateState({ dailyActions: { ...gameState.dailyActions, talkedTo: [...gameState.dailyActions.talkedTo, apprentice.id] } }, `${apprentice.name}${getWaGwaParticle(apprentice.name)} 이미 대화했습니다.`); return; }
-        
-        let changes = { dailyActions: { ...gameState.dailyActions, talkedTo: [...gameState.dailyActions.talkedTo, apprentice.id] } };
-        let message = `${apprentice.name}${getWaGwaParticle(apprentice.name)} 대화했습니다. `;
-        if (apprentice.trust > 80) { message += "그는 당신의 기술에 감탄하며 새로운 아이디어를 제안합니다. (+5 효율)"; changes.efficiency = gameState.efficiency + 5; }
-        else if (apprentice.trust < 40) { message += "그는 당신의 작업 방식에 의문을 제기합니다. (-5 논리)"; changes.logic = gameState.logic - 5; }
-        else { message += "그와의 대화를 통해 작업 효율이 올랐습니다. (+2 효율)"; changes.efficiency = gameState.efficiency + 2; }
-        
-        updateState(changes, message);
+        const assistant = gameState.assistants[Math.floor(currentRandFn() * gameState.assistants.length)];
+        const possibleOutcomes = chatOutcomes.filter(o => !o.condition || o.condition(gameState, assistant));
+        const totalWeight = possibleOutcomes.reduce((sum, o) => sum + o.weight, 0);
+        const rand = currentRandFn() * totalWeight;
+        let cumulativeWeight = 0;
+        let chosenOutcome = possibleOutcomes.find(o => (cumulativeWeight += o.weight) >= rand) || possibleOutcomes[0];
+        const result = chosenOutcome.effect(gameState, assistant);
+        updateState(result.changes, result.message);
     },
     review_project: () => {
         if (!spendActionPoint()) return;
-        if (gameState.dailyActions.projectReviewed) {
-            const message = "오늘은 이미 프로젝트를 검토했습니다. (-5 효율)";
-            gameState.efficiency -= 5;
-            updateState({ efficiency: gameState.efficiency }, message);
-            return;
-        }
-        updateState({ dailyActions: { ...gameState.dailyActions, projectReviewed: true } });
-        const rand = currentRandFn();
-        let message = "프로젝트를 검토했습니다. ";
-        if (rand < 0.5) { message += "설계의 논리적 결함을 발견하여 수정했습니다. (+10 논리, +5 효율)"; updateState({ logic: gameState.logic + 10, efficiency: gameState.efficiency + 5 }); }
-        else { message += "프로젝트의 기술적 완성도가 향상되었습니다. (+5 기술)"; updateState({ skill: gameState.skill + 5 }); }
-        updateGameDisplay(message);
+        const possibleOutcomes = reviewOutcomes.filter(o => !o.condition || o.condition(gameState));
+        const totalWeight = possibleOutcomes.reduce((sum, o) => sum + o.weight, 0);
+        const rand = currentRandFn() * totalWeight;
+        let cumulativeWeight = 0;
+        let chosenOutcome = possibleOutcomes.find(o => (cumulativeWeight += o.weight) >= rand) || possibleOutcomes[0];
+        const result = chosenOutcome.effect(gameState);
+        updateState(result.changes, result.message);
     },
+    show_resource_gathering_options: () => updateState({ currentScenarioId: 'action_resource_gathering' }),
+    show_tool_management_options: () => updateState({ currentScenarioId: 'action_tool_management' }),
+    show_impromptu_crafting_options: () => updateState({ currentScenarioId: 'impromptu_crafting_menu' }),
+    gather_parts: () => {
+        if (!spendActionPoint()) return;
+        const gain = getRandomValue(10, 4);
+        updateState({ resources: { ...gameState.resources, parts: gameState.resources.parts + gain } }, `부품을 수집했습니다. (+${gain} 부품)`);
+    },
+    process_materials: () => {
+        if (!spendActionPoint()) return;
+        const gain = getRandomValue(10, 4);
+        updateState({ resources: { ...gameState.resources, materials: gameState.resources.materials + gain } }, `재료를 가공했습니다. (+${gain} 재료)`);
+    },
+    charge_energy: () => {
+        if (!spendActionPoint()) return;
+        const gain = getRandomValue(5, 2);
+        updateState({ resources: { ...gameState.resources, energy: gameState.resources.energy + gain } }, `에너지를 충전했습니다. (+${gain} 에너지)`);
+    },
+    build_toolbox: () => {
+        if (!spendActionPoint()) return;
+        const cost = { materials: 50, energy: 20 };
+        if (gameState.resources.materials >= cost.materials && gameState.resources.energy >= cost.energy) {
+            gameState.tools.toolbox.built = true;
+            const v = getRandomValue(10, 3);
+            updateState({ skill: gameState.skill + v, resources: { ...gameState.resources, materials: gameState.resources.materials - cost.materials, energy: gameState.resources.energy - cost.energy } }, `공구함을 구매했습니다! (+${v} 기술)`);
+        } else { updateState({}, "자원이 부족합니다."); }
+    },
+    build_workbench: () => {
+        if (!spendActionPoint()) return;
+        const cost = { energy: 30, materials: 30 };
+        if (gameState.resources.energy >= cost.energy && gameState.resources.materials >= cost.materials) {
+            gameState.tools.workbench.built = true;
+            const v = getRandomValue(10, 3);
+            updateState({ efficiency: gameState.efficiency + v, resources: { ...gameState.resources, energy: gameState.resources.energy - cost.energy, materials: gameState.resources.materials - cost.materials } }, `작업대를 제작했습니다! (+${v} 효율)`);
+        } else { updateState({}, "자원이 부족합니다."); }
+    },
+    build_blueprintStorage: () => {
+        if (!spendActionPoint()) return;
+        const cost = { materials: 100, energy: 50 };
+        if (gameState.resources.materials >= cost.materials && gameState.resources.energy >= cost.energy) {
+            gameState.tools.blueprintStorage.built = true;
+            const v = getRandomValue(15, 5);
+            updateState({ logic: gameState.logic + v, resources: { ...gameState.resources, materials: gameState.resources.materials - cost.materials, energy: gameState.resources.energy - cost.energy } }, `설계도 보관소를 구축했습니다! (+${v} 논리)`);
+        } else { updateState({}, "자원이 부족합니다."); }
+    },
+    build_weldingMachine: () => {
+        if (!spendActionPoint()) return;
+        const cost = { energy: 80, materials: 40 };
+        if (gameState.resources.energy >= cost.energy && gameState.resources.materials >= cost.materials) {
+            gameState.tools.weldingMachine.built = true;
+            const v = getRandomValue(15, 5);
+            updateState({ skill: gameState.skill + v, resources: { ...gameState.resources, energy: gameState.resources.energy - cost.energy, materials: gameState.resources.materials - cost.materials } }, `용접기를 구매했습니다! (+${v} 기술)`);
+        } else { updateState({}, "자원이 부족합니다."); }
+    },
+    build_cncMachine: () => {
+        if (!spendActionPoint()) return;
+        const cost = { energy: 150, rare_parts: 5 };
+        if (gameState.resources.energy >= cost.energy && gameState.resources.rare_parts >= cost.rare_parts) {
+            gameState.tools.cncMachine.built = true;
+            const v = getRandomValue(20, 5);
+            updateState({ adaptation: gameState.adaptation + v, resources: { ...gameState.resources, energy: gameState.resources.energy - cost.energy, rare_parts: gameState.resources.rare_parts - cost.rare_parts } }, `CNC 머신을 설치했습니다! (+${v} 적응력)`);
+        } else { updateState({}, "자원이 부족합니다."); }
+    },
+    maintain_tool: (params) => {
+        if (!spendActionPoint()) return;
+        const toolKey = params.tool;
+        const cost = { energy: 10, materials: 10 };
+        if (gameState.resources.energy >= cost.energy && gameState.resources.materials >= cost.materials) {
+            gameState.tools[toolKey].durability = 100;
+            updateState({ resources: { ...gameState.resources, energy: gameState.resources.energy - cost.energy, materials: gameState.resources.materials - cost.materials } }, `${gameState.tools[toolKey].name}을(를) 수리했습니다.`);
+        } else { updateState({}, "자원이 부족합니다."); }
+    },
+    craft_useless_machine: () => {
+        if (!spendActionPoint()) return;
+        const rand = currentRandFn();
+        if (rand < 0.3) {
+            const v = getRandomValue(1, 1);
+            updateState({ resources: { ...gameState.resources, rare_parts: (gameState.resources.rare_parts || 0) + v } }, `쓸모없는 기계에서 의외의 희귀 부품을 발견했습니다! (+${v} 희귀 부품)`);
+        } else {
+            const v = getRandomValue(10, 5);
+            updateState({ logic: gameState.logic + v }, `쓸모없는 기계를 만들며 논리의 역설을 깨우쳤습니다. (+${v} 논리)`);
+        }
+    },
+    modify_drone: () => {
+        if (!spendActionPoint()) return;
+        const rand = currentRandFn();
+        if (rand < 0.6) {
+            const v = getRandomValue(10, 5);
+            updateState({ skill: gameState.skill + v }, `드론 개조에 성공하여 기술이 향상되었습니다. (+${v} 기술)`);
+        } else {
+            updateState({}, `드론이 폭발했습니다. 하지만 재미있었습니다.`);
+        }
+    },
+    play_minigame: () => {
+        if (!spendActionPoint()) return;
+        const minigame = minigames[0];
+        gameState.currentScenarioId = `minigame_${minigame.name}`;
+        updateState({ dailyActions: { ...gameState.dailyActions, minigamePlayed: true } });
+        updateGameDisplay(minigame.description);
+        minigame.start(document.getElementById('gameArea'), document.getElementById('gameChoices'));
+    },
+    return_to_intro: () => updateState({ currentScenarioId: 'intro' }),
     manualNextDay: () => {
-        if (gameState.manualDayAdvances >= 5) { updateGameDisplay("오늘은 더 이상 수동으로 날짜를 넘길 수 없습니다. 내일 다시 시도해주세요."); return; }
+        if (gameState.manualDayAdvances >= 5) { updateGameDisplay("오늘은 더 이상 다음 날로 넘어갈 수 없습니다."); return; }
         updateState({
             manualDayAdvances: gameState.manualDayAdvances + 1,
             day: gameState.day + 1,
-            lastPlayedDate: new Date().toISOString().slice(0, 10),
             dailyEventTriggered: false
         });
         processDailyEvents();
     },
-    handle_difficulty: (params) => {
-        if (!spendActionPoint()) return;
-        const { choice } = params;
-        let message = "";
-        let reward = { logic: 0, efficiency: 0, skill: 0 };
-        
-        if (choice === "analyze") {
-            message = "문제를 철저히 분석하여 해결의 실마리를 찾았습니다. (+5 논리, +5 기술)";
-            reward.logic += 5;
-            reward.skill += 5;
-        } else {
-            message = "새로운 접근법이 성공했습니다! (+5 효율, +5 기술)";
-            reward.efficiency += 5;
-            reward.skill += 5;
-        }
-        
-        updateState({ ...reward, currentScenarioId: 'difficulty_resolution_result' }, message);
-    },
-    ignore_event: () => {
-        if (!spendActionPoint()) return;
-        const message = "문제를 외면했습니다. 작업 효율이 떨어집니다. (-10 효율, -5 기술)";
-        updateState({ efficiency: gameState.efficiency - 10, skill: gameState.skill - 5, currentScenarioId: 'difficulty_resolution_result' }, message);
-    },
-    show_resource_collection_options: () => updateState({ currentScenarioId: 'action_resource_collection' }),
-    show_facility_options: () => updateState({ currentScenarioId: 'action_facility_management' }),
-    perform_gather_parts: () => {
-        if (!spendActionPoint()) return;
-        const successChance = Math.min(0.95, 0.6 + (gameState.masteryLevel * 0.1) + (gameState.dailyBonus.craftSuccess || 0));
-        let message = "";
-        let changes = {};
-        if (currentRandFn() < successChance) {
-            message = "유용한 부품을 수집했습니다! (+5 부품)";
-            changes.resources = { ...gameState.resources, parts: gameState.resources.parts + 5 };
-        } else {
-            message = "부품 수집에 실패했습니다.";
-        }
-        updateState(changes, message);
-    },
-    perform_find_materials: () => {
-        if (!spendActionPoint()) return;
-        const successChance = Math.min(0.95, 0.6 + (gameState.masteryLevel * 0.1) + (gameState.dailyBonus.craftSuccess || 0));
-        let message = "";
-        let changes = {};
-        if (currentRandFn() < successChance) {
-            message = "필요한 재료를 찾았습니다! (+5 재료)";
-            changes.resources = { ...gameState.resources, materials: gameState.resources.materials + 5 };
-        } else {
-            message = "재료를 찾지 못했습니다.";
-        }
-        updateState(changes, message);
-    },
-    perform_charge_energy: () => {
-        if (!spendActionPoint()) return;
-        const successChance = Math.min(0.95, 0.6 + (gameState.masteryLevel * 0.1) + (gameState.dailyBonus.craftSuccess || 0));
-        let message = "";
-        let changes = {};
-        if (currentRandFn() < successChance) {
-            message = "에너지를 충전했습니다! (+5 에너지)";
-            changes.resources = { ...gameState.resources, energy: gameState.resources.energy + 5 };
-        } else {
-            message = "충전에 실패했습니다.";
-        }
-        updateState(changes, message);
-    },
-    build_toolbox: () => {
-        if (!spendActionPoint()) return;
-        const cost = { parts: 50, materials: 20 };
-        let message = "";
-        let changes = {};
-        if (gameState.resources.materials >= cost.materials && gameState.resources.parts >= cost.parts) {
-            gameState.tools.toolbox.built = true;
-            message = "공구함을 정리했습니다!";
-            changes.skill = gameState.skill + 10;
-            changes.resources = { ...gameState.resources, materials: gameState.resources.materials - cost.materials, parts: gameState.resources.parts - cost.parts };
-        } else {
-            message = "재료가 부족하여 정리할 수 없습니다.";
-        }
-        updateState(changes, message);
-    },
-    build_workbench: () => {
-        if (!spendActionPoint()) return;
-        const cost = { materials: 30, energy: 30 };
-        let message = "";
-        let changes = {};
-        if (gameState.resources.materials >= cost.materials && gameState.resources.energy >= cost.energy) {
-            gameState.tools.workbench.built = true;
-            message = "작업대를 제작했습니다!";
-            changes.efficiency = gameState.efficiency + 10;
-            changes.resources = { ...gameState.resources, materials: gameState.resources.materials - cost.materials, energy: gameState.resources.energy - cost.energy };
-        } else {
-            message = "재료가 부족하여 제작할 수 없습니다.";
-        }
-        updateState(changes, message);
-    },
-    build_blueprint_archive: () => {
-        if (!spendActionPoint()) return;
-        const cost = { parts: 100, materials: 50, energy: 50 };
-        let message = "";
-        let changes = {};
-        if (gameState.resources.materials >= cost.materials && gameState.resources.energy >= cost.energy && gameState.resources.parts >= cost.parts) {
-            gameState.tools.blueprintArchive.built = true;
-            message = "설계도 보관소를 구축했습니다!";
-            changes.skill = gameState.skill + 20;
-            changes.efficiency = gameState.efficiency + 20;
-            changes.resources = { ...gameState.resources, materials: gameState.resources.materials - cost.materials, energy: gameState.resources.energy - cost.energy, parts: gameState.resources.parts - cost.parts };
-        } else {
-            message = "재료가 부족하여 구축할 수 없습니다.";
-        }
-        updateState(changes, message);
-    },
-    build_welding_machine: () => {
-        if (!spendActionPoint()) return;
-        const cost = { materials: 80, energy: 40 };
-        let message = "";
-        let changes = {};
-        if (gameState.resources.materials >= cost.materials && gameState.resources.energy >= cost.energy) {
-            gameState.tools.weldingMachine.built = true;
-            message = "용접기를 도입했습니다!";
-            changes.logic = gameState.logic + 15;
-            changes.skill = gameState.skill + 10;
-            changes.resources = { ...gameState.resources, materials: gameState.resources.materials - cost.materials, energy: gameState.resources.energy - cost.energy };
-        } else {
-            message = "재료가 부족하여 도입할 수 없습니다.";
-        }
-        updateState(changes, message);
-    },
-    build_cnc_machine: () => {
-        if (!spendActionPoint()) return;
-        const cost = { materials: 50, energy: 100 };
-        let message = "";
-        let changes = {};
-        if (gameState.resources.materials >= cost.materials && gameState.resources.energy >= cost.energy) {
-            gameState.tools.cncMachine.built = true;
-            message = "CNC 머신을 설치했습니다!";
-            changes.resources = { ...gameState.resources, materials: gameState.resources.materials - cost.materials, energy: gameState.resources.energy - cost.energy };
-        } else {
-            message = "재료가 부족하여 설치할 수 없습니다.";
-        }
-        updateState(changes, message);
-    },
-    maintain_facility: (params) => {
-        if (!spendActionPoint()) return;
-        const facilityKey = params.facility;
-        const cost = { materials: 10, energy: 10 };
-        let message = "";
-        let changes = {};
-        if (gameState.resources.materials >= cost.materials && gameState.resources.energy >= cost.energy) {
-            gameState.tools[facilityKey].durability = 100;
-            message = `${gameState.tools[facilityKey].name} 도구의 수리를 완료했습니다. 내구도가 100으로 회복되었습니다.`;
-            changes.resources = { ...gameState.resources, materials: gameState.resources.materials - cost.materials, energy: gameState.resources.energy - cost.energy };
-        } else {
-            message = "수리에 필요한 재료가 부족합니다.";
-        }
-        updateState(changes, message);
-    },
-    upgrade_mastery: () => {
-        if (!spendActionPoint()) return;
-        const cost = 20 * (gameState.masteryLevel + 1);
-        if (gameState.resources.materials >= cost && gameState.resources.energy >= cost) {
-            gameState.masteryLevel++;
-            updateState({ resources: { ...gameState.resources, materials: gameState.resources.materials - cost, energy: gameState.resources.energy - cost }, masteryLevel: gameState.masteryLevel });
-            updateGameDisplay(`숙련도를 업그레이드했습니다! 모든 제작 성공률이 10% 증가합니다. (현재 레벨: ${gameState.masteryLevel})`);
-        } else { updateGameDisplay(`업그레이드에 필요한 재료가 부족합니다. (재료 ${cost}, 에너지 ${cost} 필요)`); }
-        updateState({ currentScenarioId: 'intro' });
-    },
-    review_blueprints: () => {
-        if (!spendActionPoint()) return;
-        const rand = currentRandFn();
-        if (rand < 0.3) { updateState({ resources: { ...gameState.resources, materials: gameState.resources.materials + 20, energy: gameState.resources.energy + 20 } }); updateGameDisplay("과거 설계도에서 남은 자재를 발견했습니다! (+20 재료, +20 에너지)"); }
-        else if (rand < 0.5) { updateState({ logic: gameState.logic + 10, skill: gameState.skill + 10 }); updateGameDisplay("과거 설계도에서 새로운 기술적 통찰을 얻었습니다. (+10 논리, +10 기술)"); }
-        else { updateGameDisplay("설계도를 검토했지만, 특별한 것은 발견하지 못했습니다."); }
-        updateState({ currentScenarioId: 'intro' });
-    },
-    accept_trade: () => {
-        if (!spendActionPoint()) return;
-        if (gameState.resources.energy >= 50) {
-            updateState({ resources: { ...gameState.resources, energy: gameState.resources.energy - 50, rare_components: (gameState.resources.rare_components || 0) + 1 } });
-            updateGameDisplay("거래에 성공하여 희귀 부품을 얻었습니다! 작업실의 기술력이 향상됩니다.");
-        } else { updateGameDisplay("거래에 필요한 에너지가 부족합니다.");
-        }
-        updateState({ currentScenarioId: 'intro' });
-    },
-    decline_trade: () => {
-        if (!spendActionPoint()) return;
-        updateGameDisplay("거래를 거절했습니다. 다음 기회를 노려봐야겠습니다.");
-        updateState({ currentScenarioId: 'intro' });
-    },
-    return_to_intro: () => updateState({ currentScenarioId: 'intro' }),
-    play_minigame: () => {
-        if (gameState.dailyActions.minigamePlayed) { updateGameDisplay("오늘의 미니게임은 이미 플레이했습니다."); return; }
-        if (!spendActionPoint()) return;
-        
-        const minigameIndex = (gameState.day - 1) % minigames.length;
-        const minigame = minigames[minigameIndex];
-        
-        gameState.currentScenarioId = `minigame_${minigame.name}`;
-        
-        updateState({ dailyActions: { ...gameState.dailyActions, minigamePlayed: true } }); 
-        
-        updateGameDisplay(minigame.description);
-        minigame.start(document.getElementById('gameArea'), document.getElementById('gameChoices'));
-    },
-    show_small_pleasures_options: () => updateState({ currentScenarioId: 'small_pleasures_menu' }),
-    play_slot_machine: () => {
-        if (!spendActionPoint()) return;
-        let message = "";
-        let changes = {};
-        const rand = currentRandFn();
-
-        if (rand < 0.1) { // Big Win
-            const partsGain = getRandomValue(30, 10);
-            const materialsGain = getRandomValue(20, 5);
-            const energyGain = getRandomValue(15, 5);
-            message = `슬롯머신 대박! 엄청난 자원을 얻었습니다! (+${partsGain} 부품, +${materialsGain} 재료, +${energyGain} 에너지)`;
-            changes.resources = { ...gameState.resources, parts: gameState.resources.parts + partsGain, materials: gameState.resources.materials + materialsGain, energy: gameState.resources.energy + energyGain };
-        } else if (rand < 0.4) { // Small Win
-            const efficiencyGain = getRandomValue(10, 5);
-            message = `슬롯머신 당첨! 작업 효율이 오릅니다. (+${efficiencyGain} 효율)`;
-            changes.efficiency = gameState.efficiency + efficiencyGain;
-        } else if (rand < 0.7) { // Small Loss
-            const efficiencyLoss = getRandomValue(5, 2);
-            message = `아쉽게도 꽝! 작업 효율이 조금 떨어집니다. (-${efficiencyLoss} 효율)`;
-            changes.efficiency = gameState.efficiency - efficiencyLoss;
-        } else { // No Change
-            message = `슬롯머신 결과는 아무것도 아니었습니다.`;
-        }
-        updateState({ ...changes, currentScenarioId: 'small_pleasures_menu' }, message);
-    },
-    go_fishing: () => {
-        if (!spendActionPoint()) return;
-        let message = "";
-        let changes = {};
-        const rand = currentRandFn();
-
-        if (rand < 0.2) { // Big Catch (Rare Component)
-            const rareComponentGain = getRandomValue(3, 1);
-            message = `낚시 대성공! 희귀 부품을 낚았습니다! (+${rareComponentGain} 희귀 부품)`;
-            changes.resources = { ...gameState.resources, rare_components: (gameState.resources.rare_components || 0) + rareComponentGain };
-        } else if (rand < 0.6) { // Normal Catch (Parts)
-            const partsGain = getRandomValue(10, 5);
-            message = `유용한 부품을 낚았습니다! (+${partsGain} 부품)`;
-            changes.resources = { ...gameState.resources, parts: gameState.resources.parts + partsGain };
-        } else { // No Catch
-            message = `아쉽게도 아무것도 낚지 못했습니다.`;
-        }
-        updateState({ ...changes, currentScenarioId: 'small_pleasures_menu' }, message);
-    }
 };
 
 function applyStatEffects() {
     let message = "";
-    if (gameState.logic >= 70) {
-        gameState.dailyBonus.craftSuccess += 0.1;
-        message += "뛰어난 논리력 덕분에 제작 성공률이 증가합니다. ";
-    }
-    if (gameState.logic < 30) {
-        gameState.apprentices.forEach(a => a.trust = Math.max(0, a.trust - 5));
-        message += "논리적이지 못한 판단으로 조수들의 신뢰도가 하락합니다. ";
-    }
-
-    if (gameState.efficiency >= 70) {
-        gameState.maxActionPoints += 1;
-        gameState.actionPoints = gameState.maxActionPoints;
-        message += "높은 효율성 덕분에 하루에 더 많은 작업을 할 수 있습니다. ";
-    }
-    if (gameState.efficiency < 30) {
-        gameState.maxActionPoints = Math.max(5, gameState.maxActionPoints - 1);
-        gameState.actionPoints = Math.min(gameState.actionPoints, gameState.maxActionPoints);
-        message += "효율이 낮아져 작업에 차질이 생깁니다. ";
-    }
-
-    if (gameState.skill >= 70) {
-        Object.keys(gameState.tools).forEach(key => {
-            if (gameState.tools[key].built) gameState.tools[key].durability = Math.min(100, gameState.tools[key].durability + 1);
-        });
-        message += "뛰어난 기술력 덕분에 도구 관리가 더 잘 이루어집니다. ";
-    }
-    if (gameState.skill < 30) {
-        Object.keys(gameState.tools).forEach(key => {
-            if (gameState.tools[key].built) gameState.tools[key].durability = Math.max(0, gameState.tools[key].durability - 2);
-        });
-        message += "기술이 부족하여 도구들이 빠르게 노후화됩니다. ";
-    }
+    if (gameState.logic >= 70) { message += "뛰어난 논리로 제작 성공률이 증가합니다. "; }
+    if (gameState.efficiency >= 70) { const v = getRandomValue(5, 2); gameState.resources.materials += v; message += `효율적인 자원 관리로 재료를 아꼈습니다. (+${v} 재료) `; }
+    if (gameState.skill >= 70) { const v = getRandomValue(2, 1); gameState.assistants.forEach(a => a.reliability = Math.min(100, a.reliability + v)); message += `당신의 뛰어난 기술에 조수들의 신뢰도가 상승합니다. (+${v} 신뢰도) `; }
+    if (gameState.adaptation < 30) { gameState.actionPoints -= 1; message += "적응력이 떨어져 집중력이 1 감소합니다. "; }
+    if (gameState.concentration < 30) { Object.keys(gameState.tools).forEach(key => { if(gameState.tools[key].built) gameState.tools[key].durability -= 1; }); message += "집중력 저하로 도구들이 빠르게 노후화됩니다. "; }
     return message;
 }
 
-function generateRandomApprentice() {
-    const names = ["볼트", "너트", "렌치", "스크류"];
-    const personalities = ["분석적인", "즉흥적인", "대담한", "조용한"];
-    const skills = ["회로 분석", "기계 조립", "용접", "프로그래밍"];
-    const randomId = Math.random().toString(36).substring(2, 9);
+const weightedDailyEvents = [
+    { id: "material_defect", weight: 10, condition: () => gameState.efficiency < 40, onTrigger: () => { const v = getRandomValue(10, 3); updateState({ efficiency: gameState.efficiency - v, stability: gameState.stability - v }, `재료 결함이 발견되었습니다. (-${v} 효율, -${v} 안정성)`); } },
+    { id: "energy_shortage", weight: 5, condition: () => true, onTrigger: () => { const v = getRandomValue(15, 5); updateState({ resources: { ...gameState.resources, energy: Math.max(0, gameState.resources.energy - v) }, concentration: gameState.concentration - 5 }, `에너지 부족으로 작업이 중단되었습니다. (-${v} 에너지, -5 집중)`); } },
+    { id: "new_tool_idea", weight: 15, condition: () => true, onTrigger: () => { const v = getRandomValue(10, 5); updateState({ adaptation: gameState.adaptation + v }, `새로운 도구에 대한 아이디어가 떠올랐습니다! (+${v} 적응력)`); } },
+];
 
-    return {
-        id: randomId,
-        name: names[Math.floor(currentRandFn() * names.length)],
-        personality: personalities[Math.floor(currentRandFn() * personalities.length)],
-        skill: skills[Math.floor(currentRandFn() * skills.length)],
-        trust: 50
-    };
-}
-
-// --- Daily/Initialization Logic ---
 function processDailyEvents() {
     if (gameState.dailyEventTriggered) return;
     currentRandFn = mulberry32(getDailySeed() + gameState.day);
-
-    updateState({
-        actionPoints: 10,
-        maxActionPoints: 10,
-        dailyActions: { tinkered: false, projectReviewed: false, talkedTo: [], minigamePlayed: false },
-        dailyEventTriggered: true,
-        dailyBonus: { craftSuccess: 0 }
-    });
-
+    updateState({ actionPoints: 10, dailyEventTriggered: true });
     const statEffectMessage = applyStatEffects();
+    let dailyMessage = "작업실에 새로운 아침이 밝았습니다. " + statEffectMessage;
 
-    let skillBonusMessage = "";
-    let durabilityMessage = "";
+    if (gameState.logic <= 0) { gameState.currentScenarioId = "game_over_logic"; }
+    else if (gameState.efficiency <= 0) { gameState.currentScenarioId = "game_over_efficiency"; }
+    else if (gameState.skill <= 0) { gameState.currentScenarioId = "game_over_skill"; }
+    else if (gameState.resources.parts <= 0 && gameState.day > 1) { gameState.currentScenarioId = "game_over_resources"; }
 
-    gameState.apprentices.forEach(a => {
-        if (a.skill === '회로 분석') { gameState.resources.parts++; skillBonusMessage += `${a.name}의 도움으로 부품을 추가로 얻었습니다. `; }
-        else if (a.skill === '기계 조립') { gameState.resources.materials++; skillBonusMessage += `${a.name}의 도움으로 재료를 추가로 얻었습니다. `; }
-        else if (a.skill === '프로그래밍') { gameState.efficiency++; skillBonusMessage += `${a.name} 덕분에 작업실의 효율이 +1 향상되었습니다. `; }
-    });
-
-    Object.keys(gameState.tools).forEach(key => {
-        const facility = gameState.tools[key];
-        if(facility.built) {
-            facility.durability -= 1;
-            if(facility.durability <= 0) {
-                facility.built = false;
-                durabilityMessage += `${facility.name} 도구가 파손되었습니다! 수리가 필요합니다. `; 
-            }
-        }
-    });
-
-    gameState.resources.parts -= gameState.apprentices.length * 2;
-    let dailyMessage = "새로운 작업일이 시작되었습니다. ";
-    dailyMessage += statEffectMessage + skillBonusMessage + durabilityMessage;
-    if (gameState.resources.parts < 0) {
-        gameState.efficiency -= 10;
-        dailyMessage += "부품이 부족하여 작업 효율이 떨어집니다! (-10 효율)";
-    }
-    
-    const rand = currentRandFn();
     let eventId = "intro";
-    if (rand < 0.15) { eventId = "daily_event_material_defect"; updateState({resources: {...gameState.resources, materials: Math.max(0, gameState.resources.materials - 10)}}); }
-    else if (rand < 0.30) { eventId = "daily_event_energy_shortage"; updateState({resources: {...gameState.resources, energy: Math.max(0, gameState.resources.energy - 10)}}); }
-    else if (rand < 0.5 && gameState.apprentices.length >= 2) { eventId = "daily_event_technical_difficulty"; }
-    else if (rand < 0.7 && gameState.tools.blueprintArchive.built && gameState.apprentices.length < gameState.maxApprentices) {
-        eventId = "daily_event_new_apprentice";
-        const newApprentice = generateRandomApprentice();
-        gameState.pendingNewApprentice = newApprentice;
-        gameScenarios["daily_event_new_apprentice"].text = `새로운 조수 ${newApprentice.name}(${newApprentice.personality}, ${newApprentice.skill})이(가) 합류하고 싶어 합니다. (현재 조수: ${gameState.apprentices.length} / ${gameState.maxApprentices})`;
+    const possibleEvents = weightedDailyEvents.filter(event => !event.condition || event.condition());
+    if (possibleEvents.length > 0) {
+        const totalWeight = possibleEvents.reduce((sum, event) => sum + event.weight, 0);
+        const rand = currentRandFn() * totalWeight;
+        let cumulativeWeight = 0;
+        let chosenEvent = possibleEvents.find(event => (cumulativeWeight += event.weight) >= rand);
+        if (chosenEvent) {
+            eventId = chosenEvent.id;
+            if (chosenEvent.onTrigger) chosenEvent.onTrigger();
+        }
     }
-    else if (rand < 0.85 && gameState.tools.blueprintArchive.built) { eventId = "daily_event_rare_part_offer"; }
-    
-    gameState.currentScenarioId = eventId;
-    updateGameDisplay(dailyMessage + (gameScenarios[eventId]?.text || ''));
-    renderChoices(gameScenarios[eventId].choices);
+    if (!gameScenarios[gameState.currentScenarioId]) {
+        gameState.currentScenarioId = eventId;
+    }
+    updateGameDisplay(dailyMessage + (gameScenarios[gameState.currentScenarioId]?.text || ''));
+    renderChoices(gameScenarios[gameState.currentScenarioId]?.choices || []);
     saveGameState();
 }
 
@@ -836,7 +499,7 @@ function initDailyGame() {
 }
 
 function resetGame() {
-    if (confirm("정말로 작업실을 초기화하시겠습니까? 모든 작업 기록이 사라집니다.")) {
+    if (confirm("정말로 작업실을 폐쇄하시겠습니까? 모든 부품과 설계도가 사라집니다.")) {
         localStorage.removeItem('istpWorkshopGame');
         resetGameState();
         saveGameState();
