@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ISTP — istp.kr</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oxanium:wght@200;300;400;600;700&family=Inter:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+
+    <style type="text/tailwindcss">
+      @theme {
+        /* ── Deep machine tones ── */
+        --color-mech-50:   #f0faf4;
+        --color-mech-100:  #d4f0e0;
+        --color-mech-200:  #9fd8bc;
+        --color-mech-300:  #5cb898;
+        --color-mech-400:  #2a9478;
+        --color-mech-500:  #157060;
+        --color-mech-600:  #0d5048;
+        --color-mech-700:  #083830;
+        --color-mech-800:  #052420;
+        --color-mech-900:  #021410;
+        --color-mech-950:  #010c0a;
+
+        /* ── Cyan precision — 정밀 계기판 ── */
+        --color-cyan-300:  #67e8f9;
+        --color-cyan-400:  #22d3ee;
+        --color-cyan-500:  #06b6d4;
+        --color-cyan-600:  #0891b2;
+
+        /* ── Amber warning — 경고등 ── */
+        --color-warn-300:  #fcd34d;
+        --color-warn-400:  #f59e0b;
+        --color-warn-500:  #d97706;
+
+        /* ── Iron grey — 철의 무게 ── */
+        --color-iron-300:  #9ca3af;
+        --color-iron-400:  #6b7280;
+        --color-iron-500:  #4b5563;
+        --color-iron-700:  #374151;
+        --color-iron-900:  #111827;
+        --color-iron-950:  #080c10;
+
+        --font-mono:    "Share Tech Mono", "Courier New", monospace;
+        --font-display: "Oxanium", "Arial", sans-serif;
+        --font-ui:      "Inter", system-ui, sans-serif;
+      }
+
+      @layer base {
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html {
+          scroll-behavior: smooth;
+          background-color: var(--color-iron-950);
+          color: var(--color-mech-200);
+        }
+
+        body {
+          font-family: var(--font-ui);
+          font-weight: 300;
+          letter-spacing: 0.01em;
+          overflow-x: hidden;
+        }
+
+        ::selection {
+          background-color: rgba(34,211,238,0.3);
+          color: #fff;
+        }
+
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: var(--color-iron-950); }
+        ::-webkit-scrollbar-thumb {
+          background: rgba(34,211,238,0.25);
+          border-radius: 0;
+        }
+      }
+
+      /* ══════════════════════════════════════════
+         CANVAS & BG LAYERS
+      ══════════════════════════════════════════ */
+      #circuit-canvas {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* 회로기판 격자 — 정밀한 내부 구조 */
+      .grid-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+        background-image:
+          linear-gradient(rgba(34,211,238,0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(34,211,238,0.03) 1px, transparent 1px);
+        background-size: 48px 48px;
+        animation: grid-drift 20s linear infinite;
+      }
+
+      @keyframes grid-drift {
+        from { background-position: 0 0; }
+        to   { background-position: 48px 48px; }
+      }
+
+      /* 심층 글로우 — 엔진 핵심의 열기 */
+      .core-glow {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 2;
+        background:
+          radial-gradient(ellipse 55% 45% at 50% 55%,
+            rgba(21,112,96, 0.12)  0%, transparent 65%),
+          radial-gradient(ellipse 30% 30% at 20% 80%,
+            rgba(34,211,238,0.06)  0%, transparent 55%),
+          radial-gradient(ellipse 30% 30% at 80% 20%,
+            rgba(245,158,11,0.04)  0%, transparent 50%),
+          radial-gradient(ellipse 100% 20% at 50% 0%,
+            rgba(8,12,16,0.9) 0%, transparent 100%);
+        animation: core-breathe 12s ease-in-out infinite alternate;
+      }
+
+      @keyframes core-breathe {
+        0%   { opacity: 0.8; }
+        50%  { opacity: 1;   }
+        100% { opacity: 0.85;}
+      }
+
+      /* ══════════════════════════════════════════
+         SITE WRAPPER
+      ══════════════════════════════════════════ */
+      .site-wrapper {
+        position: relative;
+        z-index: 3;
+        min-height: 100dvh;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+
+      /* ══════════════════════════════════════════
+         HEADER
+      ══════════════════════════════════════════ */
+      .glass-header {
+        background: rgba(8,12,16,0.7);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(34,211,238,0.1);
+      }
+
+      /* ══════════════════════════════════════════
+         LOGO — Oxanium, 차갑고 기계적
+      ══════════════════════════════════════════ */
+      .logo-istp {
+        font-family: var(--font-display);
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        font-size: clamp(3.2rem, 9.5vw, 7.8rem);
+        line-height: 0.95;
+        color: transparent;
+        background: linear-gradient(
+          150deg,
+          var(--color-cyan-300)   0%,
+          var(--color-mech-200)   30%,
+          var(--color-mech-400)   60%,
+          var(--color-cyan-600)   100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        filter: drop-shadow(0 0 18px rgba(34,211,238,0.2))
+                drop-shadow(0 0 40px rgba(21,112,96,0.15));
+        transition: filter 0.5s ease;
+      }
+
+      .logo-istp:hover {
+        filter: drop-shadow(0 0 32px rgba(34,211,238,0.5))
+                drop-shadow(0 0 60px rgba(21,112,96,0.25));
+      }
+
+      /* ══════════════════════════════════════════
+         NAV
+      ══════════════════════════════════════════ */
+      .nav-link {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        letter-spacing: 0.18em;
+        color: rgba(159,216,188,0.3);
+        position: relative;
+        transition: color 0.3s ease;
+        text-decoration: none;
+      }
+
+      .nav-link::before {
+        content: "//";
+        margin-right: 0.35em;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        color: var(--color-cyan-500);
+      }
+
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        bottom: -3px; left: 0;
+        width: 0; height: 1px;
+        background: var(--color-cyan-400);
+        transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
+      }
+
+      .nav-link:hover { color: var(--color-mech-200); }
+      .nav-link:hover::before { opacity: 1; }
+      .nav-link:hover::after { width: 100%; }
+
+      /* ══════════════════════════════════════════
+         HERO
+      ══════════════════════════════════════════ */
+      .hero-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+        padding: clamp(5rem,13vw,10rem) 1.5rem clamp(4rem,9vw,8rem);
+        min-height: 90dvh;
+        overflow: hidden;
+      }
+
+      /* 회로 배경 글자 */
+      .hero-bg-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-52%);
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: clamp(22vw,32vw,44vw);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: transparent;
+        -webkit-text-stroke: 1px rgba(34,211,238,0.05);
+        user-select: none;
+        pointer-events: none;
+        white-space: nowrap;
+        line-height: 1;
+      }
+
+      /* 수직 스캔라인 */
+      .scan-line {
+        position: absolute;
+        top: 0; bottom: 0;
+        width: 1px;
+        background: linear-gradient(
+          to bottom,
+          transparent 0%,
+          var(--color-cyan-500) 45%,
+          var(--color-cyan-400) 50%,
+          var(--color-cyan-500) 55%,
+          transparent 100%
+        );
+        opacity: 0;
+        animation: scan-sweep 8s linear infinite;
+        pointer-events: none;
+      }
+
+      @keyframes scan-sweep {
+        0%   { left: -1%; opacity: 0;   }
+        5%   { opacity: 0.4; }
+        95%  { opacity: 0.4; }
+        100% { left: 101%; opacity: 0; }
+      }
+
+      /* 하단 회로 바 */
+      .circuit-bar {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          var(--color-mech-500) 15%,
+          var(--color-cyan-400) 50%,
+          var(--color-mech-500) 85%,
+          transparent 100%
+        );
+        opacity: 0.35;
+        animation: bar-pulse 4s ease-in-out infinite alternate;
+      }
+
+      @keyframes bar-pulse {
+        from { opacity: 0.2; }
+        to   { opacity: 0.5; }
+      }
+
+      /* ══════════════════════════════════════════
+         SECTION LABEL — 모노스페이스 터미널
+      ══════════════════════════════════════════ */
+      .section-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        letter-spacing: 0.12em;
+        color: var(--color-cyan-500);
+      }
+
+      /* ══════════════════════════════════════════
+         TAGLINE
+      ══════════════════════════════════════════ */
+      .tagline {
+        font-family: var(--font-display);
+        font-weight: 300;
+        font-size: clamp(1rem, 2.5vw, 1.4rem);
+        color: rgba(159,216,188,0.45);
+        letter-spacing: 0.06em;
+        line-height: 1.75;
+      }
+
+      /* ══════════════════════════════════════════
+         VIRTUOSO BADGE — 터미널 스타일
+      ══════════════════════════════════════════ */
+      .virtuoso-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.38rem 1rem;
+        background: rgba(34,211,238,0.05);
+        border: 1px solid rgba(34,211,238,0.2);
+        border-left: 3px solid var(--color-cyan-500);
+      }
+
+      .cursor-blink {
+        width: 7px; height: 13px;
+        background: var(--color-cyan-400);
+        animation: cursor-on 1s step-end infinite;
+      }
+
+      @keyframes cursor-on {
+        0%,100% { opacity: 1; }
+        50%     { opacity: 0; }
+      }
+
+      /* ══════════════════════════════════════════
+         DIVIDERS
+      ══════════════════════════════════════════ */
+      .mech-line-h {
+        border: none;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(34,211,238,0.08)  15%,
+          rgba(21,112,96,0.2)   50%,
+          rgba(34,211,238,0.08)  85%,
+          transparent 100%
+        );
+        margin: 0;
+      }
+
+      .mech-line-v {
+        width: 1px;
+        background: linear-gradient(
+          to bottom,
+          transparent,
+          var(--color-cyan-500)  35%,
+          var(--color-mech-400)  65%,
+          transparent
+        );
+        animation: vline-tick 3s ease-in-out infinite alternate;
+      }
+
+      @keyframes vline-tick {
+        from { opacity: 0.4; transform: scaleY(0.9);  }
+        to   { opacity: 1;   transform: scaleY(1.1);  }
+      }
+
+      /* ══════════════════════════════════════════
+         LETTER BLOCKS — I · S · T · P
+         터미널 카드 스타일
+      ══════════════════════════════════════════ */
+      .letter-block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1.8rem 1.2rem;
+        background: rgba(34,211,238,0.02);
+        border: 1px solid rgba(34,211,238,0.08);
+        border-top: 2px solid transparent;
+        flex: 1;
+        min-width: min(120px,100%);
+        position: relative;
+        overflow: hidden;
+        transition:
+          border-color 0.35s ease,
+          border-top-color 0.35s ease,
+          transform    0.4s cubic-bezier(0.22,1,0.36,1),
+          box-shadow   0.35s ease;
+        cursor: default;
+      }
+
+      /* terminal scanline on hover */
+      .letter-block::after {
+        content: "";
+        position: absolute;
+        top: -100%; left: 0; right: 0;
+        height: 1px;
+        background: rgba(34,211,238,0.4);
+        transition: top 0.4s ease;
+      }
+
+      .letter-block:hover::after { top: 50%; }
+
+      .lb-i:hover { border-color:rgba(34,211,238,0.3);  border-top-color:var(--color-cyan-400);   transform:translateY(-6px); box-shadow:0 20px 50px rgba(0,0,0,0.7),0 0 25px rgba(34,211,238,0.08); }
+      .lb-s:hover { border-color:rgba(92,184,152,0.3);  border-top-color:var(--color-mech-300);   transform:translateY(-6px); box-shadow:0 20px 50px rgba(0,0,0,0.7),0 0 25px rgba(92,184,152,0.08); }
+      .lb-t:hover { border-color:rgba(245,158,11,0.3);  border-top-color:var(--color-warn-400);   transform:translateY(-6px); box-shadow:0 20px 50px rgba(0,0,0,0.7),0 0 25px rgba(245,158,11,0.08); }
+      .lb-p:hover { border-color:rgba(107,114,128,0.4); border-top-color:var(--color-iron-300);   transform:translateY(-6px); box-shadow:0 20px 50px rgba(0,0,0,0.7),0 0 25px rgba(107,114,128,0.08); }
+
+      .letter-big {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: clamp(2.2rem,5.2vw,3.8rem);
+        line-height: 1;
+        color: transparent;
+        -webkit-background-clip: text;
+        background-clip: text;
+        letter-spacing: 0.05em;
+      }
+
+      .l-i { background: linear-gradient(150deg, var(--color-cyan-300),   var(--color-cyan-600));   }
+      .l-s { background: linear-gradient(150deg, var(--color-mech-200),   var(--color-mech-500));   }
+      .l-t { background: linear-gradient(150deg, var(--color-warn-300),   var(--color-warn-500));   }
+      .l-p { background: linear-gradient(150deg, var(--color-iron-300),   var(--color-iron-500));   }
+
+      .letter-word {
+        font-family: var(--font-mono);
+        font-size: 0.55rem;
+        letter-spacing: 0.1em;
+        color: rgba(159,216,188,0.3);
+        text-align: center;
+      }
+
+      .letter-desc {
+        font-family: var(--font-display);
+        font-weight: 300;
+        font-size: 0.78rem;
+        color: rgba(159,216,188,0.4);
+        text-align: center;
+        line-height: 1.55;
+        margin-top: 0.2rem;
+        letter-spacing: 0.03em;
+      }
+
+      /* ══════════════════════════════════════════
+         FEATURE CARDS — 회로기판 카드
+      ══════════════════════════════════════════ */
+      .feature-card {
+        background: rgba(34,211,238,0.02);
+        border: 1px solid rgba(34,211,238,0.07);
+        position: relative;
+        overflow: hidden;
+        transition:
+          border-color 0.35s ease,
+          transform    0.4s cubic-bezier(0.22,1,0.36,1),
+          box-shadow   0.35s ease;
+        cursor: default;
+      }
+
+      /* corner bracket decoration */
+      .feature-card::before,
+      .feature-card::after {
+        content: "";
+        position: absolute;
+        width: 10px; height: 10px;
+        opacity: 0;
+        transition: opacity 0.35s ease;
+      }
+
+      .feature-card::before {
+        top: 0; left: 0;
+        border-top: 1px solid var(--color-cyan-500);
+        border-left: 1px solid var(--color-cyan-500);
+      }
+
+      .feature-card::after {
+        bottom: 0; right: 0;
+        border-bottom: 1px solid var(--color-cyan-500);
+        border-right: 1px solid var(--color-cyan-500);
+      }
+
+      .feature-card:hover::before,
+      .feature-card:hover::after { opacity: 1; }
+
+      .fc-cyan:hover  { border-color:rgba(34,211,238,0.2);  transform:translateY(-5px); box-shadow:0 24px 55px rgba(0,0,0,0.7),0 0 35px rgba(34,211,238,0.06); }
+      .fc-mech:hover  { border-color:rgba(92,184,152,0.2);  transform:translateY(-5px); box-shadow:0 24px 55px rgba(0,0,0,0.7),0 0 35px rgba(92,184,152,0.06); }
+      .fc-warn:hover  { border-color:rgba(245,158,11,0.2);  transform:translateY(-5px); box-shadow:0 24px 55px rgba(0,0,0,0.7),0 0 35px rgba(245,158,11,0.06); }
+
+      .feature-icon {
+        font-size: 1.7rem;
+        line-height: 1;
+        filter: saturate(0.4) brightness(0.75);
+        transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), filter 0.35s ease;
+      }
+      .feature-card:hover .feature-icon {
+        transform: scale(1.15) rotate(-3deg);
+        filter: saturate(1) brightness(1.05);
+      }
+
+      .feature-title {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--color-mech-200);
+      }
+
+      .feature-body {
+        font-family: var(--font-ui);
+        font-size: 0.83rem;
+        line-height: 1.9;
+        color: rgba(159,216,188,0.38);
+        font-weight: 300;
+      }
+
+      /* ══════════════════════════════════════════
+         CTA BUTTON — 터미널 커맨드 스타일
+      ══════════════════════════════════════════ */
+      .cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.85rem 2.3rem;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        font-weight: 400;
+        color: var(--color-mech-200);
+        border: 1px solid rgba(34,211,238,0.2);
+        border-left: 3px solid var(--color-cyan-500);
+        background: rgba(34,211,238,0.03);
+        cursor: pointer;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+      }
+
+      .cta-btn::before {
+        content: "$ ";
+        color: var(--color-cyan-500);
+        font-size: 0.75rem;
+        transition: color 0.3s ease;
+      }
+
+      .cta-btn::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(34,211,238,0.04);
+        opacity: 0;
+        transition: opacity 0.35s ease;
+      }
+
+      .cta-btn:hover {
+        border-color: rgba(34,211,238,0.45);
+        border-left-color: var(--color-cyan-400);
+        color: #fff;
+        box-shadow: 0 0 25px rgba(34,211,238,0.12),
+                    inset 0 0 15px rgba(34,211,238,0.04);
+      }
+      .cta-btn:hover::after { opacity: 1; }
+
+      /* ══════════════════════════════════════════
+         TRAIT PILLS — 태그 칩
+      ══════════════════════════════════════════ */
+      .traits-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+      }
+
+      .trait-pill {
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.1em;
+        font-weight: 400;
+        padding: 0.3rem 0.8rem;
+        border: 1px solid rgba(34,211,238,0.12);
+        color: rgba(159,216,188,0.3);
+        background: rgba(34,211,238,0.02);
+        transition: all 0.3s ease;
+        cursor: default;
+      }
+
+      .trait-pill::before {
+        content: "#";
+        color: var(--color-cyan-600);
+        margin-right: 0.2em;
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+      }
+
+      .trait-pill:nth-child(4n+1):hover { border-color:rgba(34,211,238,0.4);  color:var(--color-cyan-300);  background:rgba(34,211,238,0.05);  transform:translateY(-2px); }
+      .trait-pill:nth-child(4n+2):hover { border-color:rgba(92,184,152,0.4);  color:var(--color-mech-200);  background:rgba(92,184,152,0.05);  transform:translateY(-2px); }
+      .trait-pill:nth-child(4n+3):hover { border-color:rgba(245,158,11,0.4);  color:var(--color-warn-300);  background:rgba(245,158,11,0.05);  transform:translateY(-2px); }
+      .trait-pill:nth-child(4n):hover   { border-color:rgba(156,163,175,0.4); color:var(--color-iron-300);  background:rgba(156,163,175,0.05); transform:translateY(-2px); }
+
+      .trait-pill:hover::before { opacity: 1; color: var(--color-cyan-400); }
+
+      /* ══════════════════════════════════════════
+         QUOTE — 모노스페이스
+      ══════════════════════════════════════════ */
+      .mech-quote {
+        font-family: var(--font-display);
+        font-weight: 300;
+        font-size: clamp(1.05rem, 2.6vw, 1.5rem);
+        line-height: 1.9;
+        color: rgba(159,216,188,0.48);
+        position: relative;
+        padding: 0 2.5rem;
+        letter-spacing: 0.04em;
+      }
+
+      .mech-quote::before {
+        content: "/*";
+        position: absolute;
+        left: 0; top: 0;
+        font-family: var(--font-mono);
+        font-size: 1.2rem;
+        color: rgba(34,211,238,0.2);
+        line-height: 1.9;
+      }
+
+      .mech-quote::after {
+        content: "*/";
+        position: absolute;
+        right: 0; bottom: 0;
+        font-family: var(--font-mono);
+        font-size: 1.2rem;
+        color: rgba(34,211,238,0.2);
+        line-height: 1.9;
+      }
+
+      /* ══════════════════════════════════════════
+         ENGINE BOX — 내부 구조 박스
+      ══════════════════════════════════════════ */
+      .engine-box {
+        border: 1px solid rgba(34,211,238,0.1);
+        background: rgba(34,211,238,0.02);
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* 코너 브라켓 */
+      .engine-box::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0;
+        width: 20px; height: 20px;
+        border-top: 2px solid var(--color-cyan-600);
+        border-left: 2px solid var(--color-cyan-600);
+        opacity: 0.5;
+      }
+
+      .engine-box::after {
+        content: "ISTP";
+        position: absolute;
+        right: 1.5rem;
+        bottom: 0.5rem;
+        font-family: var(--font-mono);
+        font-size: 7rem;
+        color: rgba(34,211,238,0.025);
+        line-height: 1;
+        letter-spacing: 0.08em;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      /* ══════════════════════════════════════════
+         STATS
+      ══════════════════════════════════════════ */
+      .stat-num {
+        font-family: var(--font-mono);
+        font-weight: 400;
+        font-size: clamp(1.8rem,4.5vw,3rem);
+        letter-spacing: 0.08em;
+        line-height: 1;
+        color: transparent;
+        -webkit-background-clip: text;
+        background-clip: text;
+      }
+
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.55rem;
+        letter-spacing: 0.15em;
+        color: rgba(159,216,188,0.22);
+        margin-top: 0.35rem;
+      }
+
+      /* ══════════════════════════════════════════
+         DOMAIN BADGE
+      ══════════════════════════════════════════ */
+      .domain-badge {
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.15em;
+        color: rgba(159,216,188,0.2);
+        border: 1px solid rgba(34,211,238,0.1);
+        border-left: 2px solid rgba(34,211,238,0.3);
+        padding: 0.35rem 0.85rem;
+      }
+
+      /* ══════════════════════════════════════════
+         FOOTER
+      ══════════════════════════════════════════ */
+      .site-footer {
+        border-top: 1px solid rgba(34,211,238,0.08);
+        padding: 2rem 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        background: rgba(8,12,16,0.7);
+        backdrop-filter: blur(14px);
+      }
+
+      .footer-copy {
+        font-family: var(--font-mono);
+        font-size: 0.58rem;
+        letter-spacing: 0.12em;
+        color: rgba(159,216,188,0.15);
+      }
+
+      /* ══════════════════════════════════════════
+         ANIMATIONS — 정밀하고 절제된
+      ══════════════════════════════════════════ */
+      /* 터미널 타이핑처럼 왼쪽에서 펼쳐짐 */
+      .type-in {
+        opacity: 0;
+        clip-path: inset(0 100% 0 0);
+        animation: type-in-kf 0.8s cubic-bezier(0.4,0,0.2,1) forwards;
+      }
+
+      @keyframes type-in-kf {
+        to {
+          opacity: 1;
+          clip-path: inset(0 0% 0 0);
+        }
+      }
+
+      .fade-up {
+        opacity: 0;
+        transform: translateY(16px);
+        animation: fade-up-kf 0.9s cubic-bezier(0.22,1,0.36,1) forwards;
+      }
+
+      @keyframes fade-up-kf {
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .delay-1 { animation-delay: 0.1s;  }
+      .delay-2 { animation-delay: 0.22s; }
+      .delay-3 { animation-delay: 0.36s; }
+      .delay-4 { animation-delay: 0.52s; }
+      .delay-5 { animation-delay: 0.68s; }
+      .delay-6 { animation-delay: 0.84s; }
+      .delay-7 { animation-delay: 1.0s;  }
+
+      /* ══════════════════════════════════════════
+         SCROLL INDICATOR
+      ══════════════════════════════════════════ */
+      .scroll-indicator {
+        position: absolute;
+        bottom: 2.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        animation: scroll-tick 2.5s ease-in-out infinite;
+      }
+
+      @keyframes scroll-tick {
+        0%, 100% { opacity: 0.18; transform: translateX(-50%) translateY(0);   }
+        50%       { opacity: 0.45; transform: translateX(-50%) translateY(7px); }
+      }
+
+      /* ══════════════════════════════════════════
+         GRID
+      ══════════════════════════════════════════ */
+      .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(260px,100%),1fr));
+        gap: 1.2rem;
+      }
+
+      /* ══════════════════════════════════════════
+         ORIGIN TEXT
+      ══════════════════════════════════════════ */
+      .origin-text {
+        font-family: var(--font-display);
+        font-weight: 300;
+        font-size: clamp(1rem,2.5vw,1.38rem);
+        line-height: 2.1;
+        color: rgba(159,216,188,0.42);
+        letter-spacing: 0.04em;
+      }
+
+      .origin-em-c { color: var(--color-cyan-300);  font-weight: 400; }
+      .origin-em-m { color: var(--color-mech-300);  font-weight: 400; }
+      .origin-em-w { color: var(--color-warn-300);  font-weight: 400; }
+    </style>
+  </head>
+
+  <body>
+    <canvas id="circuit-canvas"></canvas>
+    <div class="grid-layer"  aria-hidden="true"></div>
+    <div class="core-glow"   aria-hidden="true"></div>
+
+    <div class="site-wrapper">
+
+      <!-- ══════════════════════════════════════
+           HEADER
+      ══════════════════════════════════════ -->
+      <header class="glass-header relative z-10 flex items-center
+                     justify-between px-8 py-6">
+
+        <a href="/" class="logo-istp select-none"
+           style="font-size:1.25rem; letter-spacing:0.18em;">ISTP</a>
+
+        <nav class="hidden sm:flex items-center gap-9" aria-label="Primary">
+          <a href="#letters"  class="nav-link">letters</a>
+          <a href="#workshop" class="nav-link">workshop</a>
+          <a href="#contact"  class="nav-link">contact</a>
+        </nav>
+
+        <div class="domain-badge hidden sm:block select-none">istp.kr</div>
+      </header>
+
+      <!-- ══════════════════════════════════════
+           HERO
+      ══════════════════════════════════════ -->
+      <main>
+        <section class="hero-section">
+
+          <div class="hero-bg-text" aria-hidden="true">ISTP</div>
+          <div class="scan-line"    aria-hidden="true"></div>
+          <div class="circuit-bar"  aria-hidden="true"></div>
+
+          <!-- Virtuoso badge -->
+          <div class="virtuoso-badge type-in mb-7">
+            <span class="cursor-blink" aria-hidden="true"></span>
+            <span style="font-family:var(--font-mono);font-size:0.6rem;
+                         letter-spacing:0.14em;
+                         color:rgba(159,216,188,0.6);">
+              the_virtuoso.istp
+            </span>
+          </div>
+
+          <!-- Logo -->
+          <h1 class="logo-istp type-in delay-1 select-none">ISTP</h1>
+
+          <!-- Tagline -->
+          <p class="tagline fade-up delay-2 mt-6 max-w-lg">
+            말하지 않는다. 만들어서 보여준다.<br />
+            <span style="font-size:0.88em; opacity:0.6;">
+              Introverted · Sensing · Thinking · Perceiving
+            </span>
+          </p>
+
+          <!-- vertical line -->
+          <div class="mech-line-v h-12 mx-auto my-9 fade-up delay-3"
+               aria-hidden="true"></div>
+
+          <!-- Quote -->
+          <blockquote class="mech-quote fade-up delay-4 max-w-2xl">
+            혼자서 분해하고,<br />
+            혼자서 이해하고,<br />
+            혼자서 고친다.
+          </blockquote>
+
+          <!-- Trait pills -->
+          <div class="traits-wrap fade-up delay-5 mt-9 max-w-xl">
+            <span class="trait-pill">precision</span>
+            <span class="trait-pill">observe</span>
+            <span class="trait-pill">analyze</span>
+            <span class="trait-pill">silent</span>
+            <span class="trait-pill">hands-on</span>
+            <span class="trait-pill">logic</span>
+            <span class="trait-pill">lone_wolf</span>
+            <span class="trait-pill">adapt</span>
+          </div>
+
+          <!-- CTA -->
+          <div class="mt-11 fade-up delay-6">
+            <a href="#letters" class="cta-btn">
+              enter_workshop
+            </a>
+          </div>
+
+          <!-- Scroll indicator -->
+          <div class="scroll-indicator" aria-hidden="true">
+            <span style="font-family:var(--font-mono);font-size:0.5rem;
+                         letter-spacing:0.15em;
+                         color:rgba(34,211,238,0.22);">// scroll</span>
+            <svg width="1" height="28" viewBox="0 0 1 28">
+              <line x1="0.5" y1="0" x2="0.5" y2="28"
+                    stroke="rgba(34,211,238,0.18)" stroke-width="1"/>
+            </svg>
+          </div>
+        </section>
+
+        <hr class="mech-line-h" />
+
+        <!-- ══════════════════════════════════════
+             STATS ROW — 시스템 메트릭
+        ══════════════════════════════════════ -->
+        <section class="px-8 py-14 max-w-4xl mx-auto">
+          <div class="grid grid-cols-3 gap-6">
+
+            <div class="flex flex-col items-center gap-1">
+              <span class="stat-num"
+                style="background:linear-gradient(150deg,var(--color-cyan-300),var(--color-cyan-600));
+                       -webkit-background-clip:text;background-clip:text;">
+                ~5%
+              </span>
+              <span class="stat-label">// population</span>
+            </div>
+
+            <div class="flex flex-col items-center gap-1">
+              <span class="stat-num"
+                style="background:linear-gradient(150deg,var(--color-mech-200),var(--color-mech-500));
+                       -webkit-background-clip:text;background-clip:text;">
+                Ti
+              </span>
+              <span class="stat-label">// dominant</span>
+            </div>
+
+            <div class="flex flex-col items-center gap-1">
+              <span class="stat-num"
+                style="background:linear-gradient(150deg,var(--color-warn-300),var(--color-warn-500));
+                       -webkit-background-clip:text;background-clip:text;">
+                0.0
+              </span>
+              <span class="stat-label">// noise</span>
+            </div>
+
+          </div>
+        </section>
+
+        <hr class="mech-line-h" />
+
+        <!-- ══════════════════════════════════════
+             LETTERS — I · S · T · P
+        ══════════════════════════════════════ -->
+        <section id="letters" class="px-6 py-20 max-w-5xl mx-auto">
+          <div class="mb-12 text-center">
+            <p class="section-label mb-3">// 네 글자의 구조</p>
+            <h2 style="font-family:var(--font-display);font-weight:700;
+                       font-size:clamp(1.6rem,4vw,2.7rem);
+                       letter-spacing:0.2em;text-transform:uppercase;
+                       color:var(--color-mech-200);">
+              I · S · T · P
+            </h2>
+          </div>
+
+          <div class="flex flex-wrap gap-3 justify-center">
+
+            <div class="letter-block lb-i">
+              <span class="letter-big l-i">I</span>
+              <span class="letter-word">introverted</span>
+              <span class="letter-desc">혼자서<br />재충전한다</span>
+            </div>
+
+            <div class="letter-block lb-s">
+              <span class="letter-big l-s">S</span>
+              <span class="letter-word">sensing</span>
+              <span class="letter-desc">현실을<br />정밀하게 읽는다</span>
+            </div>
+
+            <div class="letter-block lb-t">
+              <span class="letter-big l-t">T</span>
+              <span class="letter-word">thinking</span>
+              <span class="letter-desc">논리가<br />기준이다</span>
+            </div>
+
+            <div class="letter-block lb-p">
+              <span class="letter-big l-p">P</span>
+              <span class="letter-word">perceiving</span>
+              <span class="letter-desc">유연하게<br />대응한다</span>
+            </div>
+
+          </div>
+        </section>
+
+        <hr class="mech-line-h" />
+
+        <!-- ══════════════════════════════════════
+             WORKSHOP — 3 feature cards
+        ══════════════════════════════════════ -->
+        <section id="workshop" class="px-8 py-20 max-w-5xl mx-auto">
+          <div class="mb-14 text-center">
+            <p class="section-label mb-3">// 세 개의 도구</p>
+            <h2 style="font-family:var(--font-display);font-weight:700;
+                       font-size:clamp(1.6rem,4vw,2.7rem);
+                       letter-spacing:0.2em;text-transform:uppercase;
+                       color:var(--color-mech-200);">
+              ISTP의 세계
+            </h2>
+          </div>
+
+          <div class="cards-grid">
+
+            <div class="feature-card fc-cyan p-8">
+              <div class="feature-icon mb-5">🔧</div>
+              <h3 class="feature-title mb-3">정밀 (Precision)</h3>
+              <p class="feature-body">
+                세상을 분해한다. 어떻게 작동하는지 알아야 직성이 풀린다.
+                기계든, 코드든, 사람이든 — ISTP의 눈은 언제나
+                내부 구조를 향해 있다. 조용히 관찰하고, 정확하게 판단한다.
+              </p>
+            </div>
+
+            <div class="feature-card fc-mech p-8">
+              <div class="feature-icon mb-5">⚙️</div>
+              <h3 class="feature-title mb-3">독립 (Independence)</h3>
+              <p class="feature-body">
+                혼자여도 괜찮다. 아니, 혼자가 더 낫다.
+                ISTP는 간섭받지 않을 때 가장 빠르고 날카롭다.
+                위기 상황이 와도 흔들리지 않는다.
+                그때부터가 진짜 시작이다.
+              </p>
+            </div>
+
+            <div class="feature-card fc-warn p-8">
+              <div class="feature-icon mb-5">🎯</div>
+              <h3 class="feature-title mb-3">실행 (Execution)</h3>
+              <p class="feature-body">
+                계획보다 실행. 이론보다 현장.
+                ISTP는 머릿속에서 이미 시뮬레이션을 마쳤다.
+                말이 없는 이유는 생각이 없어서가 아니라,
+                이미 답을 알기 때문이다.
+              </p>
+            </div>
+
+          </div>
+        </section>
+
+        <hr class="mech-line-h" />
+
+        <!-- ══════════════════════════════════════
+             ENGINE BOX
+        ══════════════════════════════════════ -->
+        <section class="px-8 py-16 max-w-3xl mx-auto">
+          <div class="engine-box p-12">
+            <p class="section-label mb-6">// on being ISTP</p>
+            <p class="origin-text text-center">
+              전체 인구의 약
+              <span class="origin-em-c">5%</span>.<br />
+              가장 조용하지만,
+              <span class="origin-em-m">가장 먼저 해결한다.</span><br />
+              <br />
+              움직이지 않을 때 관찰하고 있다.<br />
+              말이 없을 때 <span class="origin-em-w">이미 알고 있다.</span>
+            </p>
+            <div class="mech-line-v h-12 mx-auto mt-10"
+                 aria-hidden="true"></div>
+          </div>
+        </section>
+
+        <hr class="mech-line-h" />
+
+        <!-- ══════════════════════════════════════
+             CONTACT
+        ══════════════════════════════════════ -->
+        <section id="contact" class="px-8 py-20 max-w-xl mx-auto text-center">
+          <p class="section-label mb-5">// contact</p>
+          <h2 style="font-family:var(--font-display);font-weight:700;
+                     font-size:clamp(1.5rem,3.5vw,2.2rem);
+                     letter-spacing:0.2em;text-transform:uppercase;
+                     color:var(--color-mech-200);">
+            연결하기
+          </h2>
+          <p class="mt-5 mb-10"
+             style="font-family:var(--font-mono);
+                    font-size:0.72rem;line-height:2;
+                    color:rgba(159,216,188,0.28);">
+            // 짧고 명확하게.
+          </p>
+          <a href="mailto:hello@istp.kr" class="cta-btn">
+            hello@istp.kr
+          </a>
+        </section>
+
+      </main>
+
+      <!-- ══════════════════════════════════════
+           FOOTER
+      ══════════════════════════════════════ -->
+      <footer class="site-footer">
+        <span class="footer-copy">// © 2026 istp.kr — all rights reserved.</span>
+        <span class="footer-copy" style="opacity:0.55;">
+          // observe · build · solve.
+        </span>
+      </footer>
+
+    </div>
+
+    <!-- ══════════════════════════════════════
+         CIRCUIT PARTICLE SCRIPT
+         — 회로 펄스, 데이터 흐름, 정밀 파티클
+    ══════════════════════════════════════ -->
+    <script>
+    (() => {
+      const canvas = document.getElementById('circuit-canvas');
+      const ctx    = canvas.getContext('2d');
+
+      let W, H;
+
+      const PULSES  = [];   // 회로 펄스선 — 수직/수평 이동
+      const NODES   = [];   // 노드 점 — 격자 교차점에서 깜빡임
+      const STREAMS = [];   // 데이터 스트림 — 수직 낙하
+
+      const P_COUNT  = 20;
+      const N_COUNT  = 40;
+      const ST_COUNT = 18;
+
+      const GRID = 48; // px, CSS grid-layer와 동일
+
+      function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', () => { resize(); init(); });
+
+      /* ── Circuit Pulse — 격자선을 따라 이동하는 펄스 ── */
+      class CircuitPulse {
+        constructor() { this.reset(false); }
+        reset(fresh = false) {
+          // 격자 라인에 스냅
+          const horiz    = Math.random() > 0.5;
+          this.horiz     = horiz;
+          this.len       = Math.floor(Math.random() * 5 + 2) * GRID;
+          this.speed     = Math.random() * 2 + 1.2;
+
+          if (horiz) {
+            this.y = Math.round(Math.random() * Math.ceil(H / GRID)) * GRID;
+            this.x = fresh ? -this.len : Math.random() * W - this.len;
+            this.vx = this.speed;
+            this.vy = 0;
+          } else {
+            this.x = Math.round(Math.random() * Math.ceil(W / GRID)) * GRID;
+            this.y = fresh ? -this.len : Math.random() * H - this.len;
+            this.vx = 0;
+            this.vy = this.speed * 0.8;
+          }
+
+          this.life  = 0;
+          this.maxL  = Math.floor(
+            (horiz ? (W + this.len) / this.speed
+                   : (H + this.len) / (this.speed * 0.8)) + 10
+          );
+
+          const t   = Math.random();
+          this.col  = t < 0.6 ? `34,211,238`   // cyan
+                    : t < 0.85 ? `92,184,152`   // mech green
+                    : `245,158,11`;              // amber warning
+          this.thick = Math.random() * 0.8 + 0.3;
+        }
+        step() {
+          this.x   += this.vx;
+          this.y   += this.vy;
+          this.life++;
+          const done = this.horiz ? this.x > W + 10 : this.y > H + 10;
+          if (done || this.life > this.maxL) this.reset(true);
+        }
+        draw() {
+          const a = Math.sin((this.life / this.maxL) * Math.PI) * 0.5;
+          const [x0, y0, x1, y1] = this.horiz
+            ? [this.x - this.len, this.y, this.x, this.y]
+            : [this.x, this.y - this.len, this.x, this.y];
+
+          const g = ctx.createLinearGradient(x0, y0, x1, y1);
+          g.addColorStop(0, `rgba(${this.col},0)`);
+          g.addColorStop(1, `rgba(${this.col},${a.toFixed(3)})`);
+
+          ctx.beginPath();
+          ctx.moveTo(x0, y0);
+          ctx.lineTo(x1, y1);
+          ctx.strokeStyle = g;
+          ctx.lineWidth   = this.thick;
+          ctx.stroke();
+
+          /* leading dot */
+          ctx.beginPath();
+          ctx.arc(x1, y1, this.thick * 1.8, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${this.col},${(a * 1.6).toFixed(3)})`;
+          ctx.fill();
+        }
+      }
+
+      /* ── Grid Node — 격자 교차점 깜빡임 ── */
+      class GridNode {
+        constructor() { this.reset(); }
+        reset() {
+          this.x     = Math.round(Math.random() * Math.ceil(W / GRID)) * GRID;
+          this.y     = Math.round(Math.random() * Math.ceil(H / GRID)) * GRID;
+          this.r     = Math.random() * 1.2 + 0.4;
+          this.life  = 0;
+          this.phase = Math.random() * Math.PI * 2;
+          this.speed = Math.random() * 0.04 + 0.02;
+          this.maxL  = Math.random() * 400 + 200;
+          const t    = Math.random();
+          this.col   = t < 0.6 ? `34,211,238` : t < 0.85 ? `92,184,152` : `245,158,11`;
+        }
+        step() {
+          this.life++;
+          if (this.life > this.maxL) this.reset();
+        }
+        draw() {
+          const a = Math.sin(this.life * this.speed + this.phase) * 0.4 + 0.1;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${this.col},${Math.max(0,a).toFixed(3)})`;
+          ctx.fill();
+        }
+      }
+
+      /* ── Data Stream — 수직 낙하 데이터 ── */
+      class DataStream {
+        constructor() { this.reset(false); }
+        reset(fresh = false) {
+          this.x    = Math.round(Math.random() * Math.ceil(W / GRID)) * GRID;
+          this.y    = fresh ? -30 : Math.random() * H;
+          this.len  = Math.floor(Math.random() * 4 + 3) * GRID * 0.25;
+          this.speed= Math.random() * 1.5 + 0.8;
+          this.life = 0;
+          this.maxL = Math.floor((H + 40) / this.speed) + 10;
+          this.thick= Math.random() * 0.6 + 0.2;
+        }
+        step() {
+          this.y   += this.speed;
+          this.life++;
+          if (this.y > H + 10 || this.life > this.maxL) this.reset(true);
+        }
+        draw() {
+          const a = Math.sin((this.life / this.maxL) * Math.PI) * 0.22;
+          const g = ctx.createLinearGradient(
+            this.x, this.y - this.len,
+            this.x, this.y
+          );
+          g.addColorStop(0, `rgba(34,211,238,0)`);
+          g.addColorStop(1, `rgba(34,211,238,${a.toFixed(3)})`);
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y - this.len);
+          ctx.lineTo(this.x, this.y);
+          ctx.strokeStyle = g;
+          ctx.lineWidth   = this.thick;
+          ctx.stroke();
+        }
+      }
+
+      function init() {
+        PULSES.length  = 0;
+        NODES.length   = 0;
+        STREAMS.length = 0;
+        for (let i = 0; i < P_COUNT;  i++) PULSES.push(new CircuitPulse());
+        for (let i = 0; i < N_COUNT;  i++) NODES.push(new GridNode());
+        for (let i = 0; i < ST_COUNT; i++) STREAMS.push(new DataStream());
+      }
+
+      function loop() {
+        ctx.clearRect(0, 0, W, H);
+        STREAMS.forEach(s => { s.step(); s.draw(); });
+        NODES.forEach(n   => { n.step(); n.draw(); });
+        PULSES.forEach(p  => { p.step(); p.draw(); });
+        requestAnimationFrame(loop);
+      }
+
+      init();
+      loop();
+    })();
+    </script>
+
+  </body>
+</html>
