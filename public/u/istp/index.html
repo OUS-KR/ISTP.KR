@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ISTP — istp.kr</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style type="text/tailwindcss">
+    @theme {
+      --color-steel-50:  #f4f6f8;
+      --color-steel-100: #e4e9ee;
+      --color-steel-200: #c9d3dc;
+      --color-steel-300: #a2b3c0;
+      --color-steel-400: #738ea0;
+      --color-steel-500: #527085;
+      --color-steel-600: #455d70;
+      --color-steel-700: #3b4e5e;
+      --color-steel-800: #354350;
+      --color-steel-900: #303b45;
+      --color-steel-950: #1e262e;
+
+      --color-blade-400: #94a3b8;
+      --color-blade-500: #64748b;
+      --color-blade-600: #475569;
+
+      --color-spark-400: #38bdf8;
+      --color-spark-500: #0ea5e9;
+
+      --color-circuit-400: #4ade80;
+      --color-circuit-500: #22c55e;
+
+      --color-copper-400: #fb923c;
+      --color-copper-500: #f97316;
+
+      --color-void-900: #080b0e;
+      --color-void-950: #050709;
+
+      --font-serif: "Noto Serif KR", serif;
+      --font-sans:  "Inter", sans-serif;
+      --font-mono:  "JetBrains Mono", monospace;
+    }
+  </style>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: #080b0e;
+      color: #c9d3dc;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Metal grid overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(148,163,184,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148,163,184,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Grain ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Particle layer ── */
+    #particle-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    /* spark / fragment particles */
+    .particle {
+      position: absolute;
+      opacity: 0;
+      animation: drift var(--dur, 10s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+    @keyframes drift {
+      0%   { transform: translate(0, 0) rotate(0deg) scale(0.5);    opacity: 0; }
+      15%  { opacity: var(--max-op, 0.5); }
+      85%  { opacity: var(--max-op, 0.3); }
+      100% { transform: translate(var(--tx,40px), var(--ty,-120px)) rotate(var(--rot,180deg)) scale(1.2); opacity: 0; }
+    }
+
+    /* ── Cold steel top vignette ── */
+    .steel-vignette {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 40vh;
+      background: radial-gradient(ellipse 80% 50% at 50% 0%,
+        rgba(56,189,248,0.07) 0%,
+        rgba(100,116,139,0.05) 35%,
+        transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Shimmer (cold steel) ── */
+    .shimmer-text {
+      background: linear-gradient(90deg,
+        #94a3b8 0%, #e2e8f0 20%, #38bdf8 40%, #94a3b8 60%, #4ade80 80%, #94a3b8 100%);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 6s linear infinite;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    /* ── Cards ── */
+    .istp-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(148,163,184,0.14);
+      border-radius: 14px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .istp-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(56,189,248,0.10);
+      border-color: rgba(56,189,248,0.30);
+    }
+
+    /* ── Link buttons ── */
+    .link-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 13px 18px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(148,163,184,0.15);
+      color: #c9d3dc;
+      text-decoration: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.22s ease;
+      cursor: pointer;
+    }
+    .link-btn:hover {
+      background: rgba(56,189,248,0.08);
+      border-color: rgba(56,189,248,0.38);
+      transform: translateX(5px);
+      box-shadow: 0 0 20px rgba(56,189,248,0.12);
+    }
+    .link-btn .btn-icon {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Avatar ── */
+    .avatar-wrap { position: relative; display: inline-block; }
+    .avatar-ring {
+      position: absolute; inset: -5px;
+      border-radius: 50%;
+      background: conic-gradient(#38bdf8, #94a3b8, #4ade80, #475569, #38bdf8);
+      animation: spin-slow 8s linear infinite;
+      z-index: -1;
+    }
+    @keyframes spin-slow { to { transform: rotate(360deg); } }
+    .avatar-img {
+      width: 92px; height: 92px;
+      border-radius: 50%;
+      border: 3px solid #080b0e;
+      position: relative; z-index: 1;
+      display: block;
+    }
+    .status-dot {
+      width: 14px; height: 14px;
+      background: #38bdf8;
+      border-radius: 50%;
+      border: 3px solid #080b0e;
+      position: absolute; bottom: 4px; right: 4px; z-index: 2;
+      animation: pulse-dot 3s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.6); }
+      50%      { box-shadow: 0 0 0 7px rgba(56,189,248,0); }
+    }
+
+    /* ── Scroll reveal ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Progress bars ── */
+    .bar-track {
+      height: 5px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 99px;
+      width: 0%;
+      transition: width 1.5s cubic-bezier(.25,.46,.45,.94);
+    }
+
+    /* ── Carousel ── */
+    .carousel-wrap { position: relative; overflow: hidden; border-radius: 14px; }
+    .carousel-track { display: flex; transition: transform 0.45s ease; }
+    .carousel-slide { min-width: 100%; position: relative; }
+    .carousel-slide img { width: 100%; height: 236px; object-fit: cover; display: block; }
+    .carousel-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 34px; height: 34px;
+      background: rgba(8,11,14,0.6);
+      border: 1px solid rgba(56,189,248,0.35);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #c9d3dc; font-size: 0.95rem;
+      transition: background 0.2s;
+      z-index: 10;
+    }
+    .carousel-btn:hover { background: rgba(56,189,248,0.25); }
+    .carousel-prev { left: 10px; }
+    .carousel-next { right: 10px; }
+    .carousel-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+    .carousel-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .carousel-dot.active { background: #38bdf8; transform: scale(1.4); }
+
+    /* ── Music / tool player ── */
+    .vinyl {
+      width: 70px; height: 70px; border-radius: 50%;
+      background: conic-gradient(
+        #0f1923 0deg 30deg, #1e2d3d 30deg 60deg,
+        #0f1923 60deg 90deg, #1e2d3d 90deg 120deg,
+        #0f1923 120deg 150deg, #1e2d3d 150deg 180deg,
+        #0f1923 180deg 210deg, #1e2d3d 210deg 240deg,
+        #0f1923 240deg 270deg, #1e2d3d 270deg 300deg,
+        #0f1923 300deg 330deg, #1e2d3d 330deg 360deg);
+      box-shadow: 0 0 0 7px #080b0e, 0 0 0 9px rgba(56,189,248,0.2);
+      position: relative; flex-shrink: 0;
+    }
+    .vinyl::after {
+      content: '';
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 10px rgba(56,189,248,0.8);
+    }
+    .vinyl-spin { animation: spin 4s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.10); border-radius: 99px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg,#38bdf8,#4ade80); border-radius: 99px; width: 0%; }
+    .progress-anim { animation: progress-grow 180s linear forwards; }
+    @keyframes progress-grow { from { width: 0%; } to { width: 100%; } }
+
+    /* ── Tags ── */
+    .tag-pill {
+      display: inline-block; padding: 4px 11px; border-radius: 99px;
+      font-size: 0.7rem; font-weight: 500; border: 1px solid;
+    }
+
+    /* ── FAQ ── */
+    details summary { cursor: pointer; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details[open] summary .faq-arrow { transform: rotate(180deg); }
+    .faq-arrow { transition: transform 0.3s ease; display: inline-block; }
+
+    /* ── Monospace terminal ── */
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #4ade80;
+    }
+
+    /* ── Forms ── */
+    .form-input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(148,163,184,0.18);
+      border-radius: 9px;
+      padding: 10px 13px;
+      color: #c9d3dc;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: rgba(56,189,248,0.55); }
+    .form-input::placeholder { color: rgba(201,211,220,0.28); }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 0.68rem; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(56,189,248,0.65);
+      margin-bottom: 12px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Feature image ── */
+    .spotlight-hover { position: relative; overflow: hidden; border-radius: 14px; cursor: pointer; }
+    .spotlight-hover img { width: 100%; height: 196px; object-fit: cover; display: block; transition: transform 0.4s ease; }
+    .spotlight-hover:hover img { transform: scale(1.05); }
+    .spotlight-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(8,11,14,0.78) 0%, transparent 55%);
+      display: flex; align-items: flex-end; padding: 14px;
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    .spotlight-hover:hover .spotlight-overlay { opacity: 1; }
+
+    /* ── Blueprint decorative corner ── */
+    .corner-deco {
+      position: fixed; pointer-events: none; z-index: 1; opacity: 0.12;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Cold steel vignette -->
+  <div class="steel-vignette"></div>
+
+  <!-- Blueprint corner decorations -->
+  <svg class="corner-deco" style="top:0;left:0;width:120px;height:120px;" viewBox="0 0 120 120">
+    <path d="M0 60 L0 0 L60 0" fill="none" stroke="#38bdf8" stroke-width="1"/>
+    <path d="M0 80 L0 0 L80 0" fill="none" stroke="#38bdf8" stroke-width="0.5"/>
+    <circle cx="0" cy="0" r="8" fill="none" stroke="#38bdf8" stroke-width="1"/>
+    <line x1="12" y1="0" x2="30" y2="0" stroke="#38bdf8" stroke-width="0.5"/>
+    <line x1="0" y1="12" x2="0" y2="30" stroke="#38bdf8" stroke-width="0.5"/>
+  </svg>
+  <svg class="corner-deco" style="bottom:0;right:0;width:120px;height:120px;transform:rotate(180deg);" viewBox="0 0 120 120">
+    <path d="M0 60 L0 0 L60 0" fill="none" stroke="#4ade80" stroke-width="1"/>
+    <path d="M0 80 L0 0 L80 0" fill="none" stroke="#4ade80" stroke-width="0.5"/>
+    <circle cx="0" cy="0" r="8" fill="none" stroke="#4ade80" stroke-width="1"/>
+  </svg>
+
+  <!-- Particle layer -->
+  <div id="particle-layer"></div>
+
+  <!-- ══════════════════════════════════════════
+       MAIN WRAPPER
+  ══════════════════════════════════════════ -->
+  <div style="position:relative; z-index:2; max-width:480px; margin:0 auto; padding:24px 16px 60px;">
+
+    <!-- ══════════════════
+         HERO
+    ══════════════════ -->
+    <section style="text-align:center; padding:48px 0 32px;" class="reveal">
+
+      <!-- Terminal header line -->
+      <div style="font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:rgba(56,189,248,0.4); margin-bottom:20px; letter-spacing:0.1em;">
+        <span style="color:#4ade80;">▶</span> istp.kr <span style="color:rgba(148,163,184,0.4);">~</span> ./virtuoso --mode=craft
+      </div>
+
+      <!-- Avatar -->
+      <div class="avatar-wrap" style="margin-bottom:20px; display:inline-block;">
+        <div class="avatar-ring"></div>
+        <img
+          class="avatar-img"
+          src="https://api.dicebear.com/9.x/shapes/svg?seed=istp&backgroundColor=080b0e&color=38bdf8,4ade80,94a3b8,475569"
+          alt="ISTP Avatar"
+        />
+        <div class="status-dot"></div>
+      </div>
+
+      <!-- Title -->
+      <h1 class="shimmer-text" style="font-family:'Noto Serif KR',serif; font-size:2.6rem; font-weight:700; letter-spacing:0.1em; margin-bottom:6px;">
+        ISTP
+      </h1>
+      <p style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:rgba(201,211,220,0.45); letter-spacing:0.1em; margin-bottom:14px;">
+        istp.kr · The Virtuoso
+      </p>
+
+      <!-- Quote -->
+      <p style="font-family:'Noto Serif KR',serif; font-size:1rem; color:rgba(201,211,220,0.8); line-height:1.75; margin-bottom:20px; padding:0 8px;">
+        "말보다 손이 먼저다. 분석하고, 분해하고, 다시 만든다."
+      </p>
+
+      <!-- Tags -->
+      <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:7px; margin-bottom:24px;">
+        <span class="tag-pill" style="background:rgba(56,189,248,0.10);border-color:rgba(56,189,248,0.30);color:#38bdf8;">🔧 장인</span>
+        <span class="tag-pill" style="background:rgba(148,163,184,0.10);border-color:rgba(148,163,184,0.28);color:#94a3b8;">🧠 논리</span>
+        <span class="tag-pill" style="background:rgba(74,222,128,0.10);border-color:rgba(74,222,128,0.28);color:#4ade80;">⚙️ 실용</span>
+        <span class="tag-pill" style="background:rgba(251,146,60,0.10);border-color:rgba(251,146,60,0.28);color:#fb923c;">🎯 정밀</span>
+        <span class="tag-pill" style="background:rgba(71,85,105,0.20);border-color:rgba(100,116,139,0.35);color:#94a3b8;">🌑 내향</span>
+      </div>
+
+      <!-- I·S·T·P Stats -->
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:8px;">
+        <div class="istp-card" style="padding:13px 6px; text-align:center;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:1.25rem; font-weight:600; color:#38bdf8;">I</div>
+          <div style="font-size:0.6rem; color:rgba(201,211,220,0.45); margin-top:4px;">내향</div>
+        </div>
+        <div class="istp-card" style="padding:13px 6px; text-align:center;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:1.25rem; font-weight:600; color:#94a3b8;">S</div>
+          <div style="font-size:0.6rem; color:rgba(201,211,220,0.45); margin-top:4px;">감각</div>
+        </div>
+        <div class="istp-card" style="padding:13px 6px; text-align:center;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:1.25rem; font-weight:600; color:#4ade80;">T</div>
+          <div style="font-size:0.6rem; color:rgba(201,211,220,0.45); margin-top:4px;">사고</div>
+        </div>
+        <div class="istp-card" style="padding:13px 6px; text-align:center;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:1.25rem; font-weight:600; color:#fb923c;">P</div>
+          <div style="font-size:0.6rem; color:rgba(201,211,220,0.45); margin-top:4px;">인식</div>
+        </div>
+      </div>
+      <p style="font-size:0.65rem; color:rgba(201,211,220,0.25); text-align:center; font-family:'JetBrains Mono',monospace;">
+        Introverted · Sensing · Thinking · Perceiving
+      </p>
+    </section>
+
+    <!-- ══════════════════
+         ANNOUNCEMENT
+    ══════════════════ -->
+    <section style="margin-bottom:24px;" class="reveal">
+      <div style="
+        background: linear-gradient(135deg, rgba(56,189,248,0.10) 0%, rgba(74,222,128,0.07) 100%);
+        border: 1px solid rgba(56,189,248,0.25);
+        border-radius: 13px;
+        padding: 15px 18px;
+        display: flex; align-items: center; gap: 13px;
+      ">
+        <span style="font-size:1.5rem; flex-shrink:0;">🔩</span>
+        <div>
+          <p style="font-weight:600; font-size:0.88rem; color:#38bdf8; margin-bottom:3px;">New Build: Virtuoso Workshop Vol.3</p>
+          <p style="font-size:0.76rem; color:rgba(201,211,220,0.55);">손으로 만든 것만이 진짜다 — 새 프로젝트 공개</p>
+        </div>
+        <span style="margin-left:auto; font-size:0.72rem; color:rgba(56,189,248,0.6); flex-shrink:0;">→</span>
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         SOCIAL LINKS
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <p class="section-label">// connect</p>
+      <div style="display:flex; flex-direction:column; gap:9px;">
+
+        <a href="#" class="link-btn">
+          <span class="btn-icon" style="background:linear-gradient(135deg,#e1306c,#833ab4);">
+            <svg width="17" height="17" fill="white" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          </span>
+          <span style="flex:1;">Instagram</span>
+          <span style="font-size:0.72rem; color:rgba(201,211,220,0.3);">@istp.kr</span>
+        </a>
+
+        <a href="#" class="link-btn">
+          <span class="btn-icon" style="background:#ff0000;">
+            <svg width="17" height="17" fill="white" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </span>
+          <span style="flex:1;">YouTube</span>
+          <span style="font-size:0.72rem; color:rgba(201,211,220,0.3);">ISTP Workshop</span>
+        </a>
+
+        <a href="#" class="link-btn">
+          <span class="btn-icon" style="background:#000;">
+            <svg width="17" height="17" fill="white" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </span>
+          <span style="flex:1;">X (Twitter)</span>
+          <span style="font-size:0.72rem; color:rgba(201,211,220,0.3);">@istp_kr</span>
+        </a>
+
+        <a href="#" class="link-btn">
+          <span class="btn-icon" style="background:#24292e;">
+            <svg width="17" height="17" fill="white" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </span>
+          <span style="flex:1;">GitHub</span>
+          <span style="font-size:0.72rem; color:rgba(201,211,220,0.3);">istp-kr</span>
+        </a>
+
+        <a href="mailto:hello@istp.kr" class="link-btn">
+          <span class="btn-icon" style="background:linear-gradient(135deg,#38bdf8,#4ade80);">✉️</span>
+          <span style="flex:1;">Email</span>
+          <span style="font-size:0.72rem; color:rgba(201,211,220,0.3);">hello@istp.kr</span>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         CRAFT TRAITS
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <p class="section-label">// craft.traits</p>
+      <div style="display:flex; flex-direction:column; gap:11px;">
+
+        <div class="istp-card" style="padding:17px 18px;">
+          <div style="display:flex; align-items:center; gap:11px; margin-bottom:9px;">
+            <span style="font-size:1.3rem;">🔧</span>
+            <div>
+              <p style="font-weight:600; font-size:0.88rem; color:#38bdf8;">Mechanics · 기계적 사고</p>
+              <p style="font-size:0.73rem; color:rgba(201,211,220,0.48);">어떻게 작동하는지 직관적으로 이해한다</p>
+            </div>
+            <span style="margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:#38bdf8; font-weight:600;">96%</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="--w:96%; background:linear-gradient(90deg,#38bdf8,#0ea5e9);"></div>
+          </div>
+        </div>
+
+        <div class="istp-card" style="padding:17px 18px;">
+          <div style="display:flex; align-items:center; gap:11px; margin-bottom:9px;">
+            <span style="font-size:1.3rem;">🧠</span>
+            <div>
+              <p style="font-weight:600; font-size:0.88rem; color:#4ade80;">Logic · 냉철한 분석</p>
+              <p style="font-size:0.73rem; color:rgba(201,211,220,0.48);">감정보다 사실, 이론보다 데이터</p>
+            </div>
+            <span style="margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:#4ade80; font-weight:600;">91%</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="--w:91%; background:linear-gradient(90deg,#4ade80,#22c55e);"></div>
+          </div>
+        </div>
+
+        <div class="istp-card" style="padding:17px 18px;">
+          <div style="display:flex; align-items:center; gap:11px; margin-bottom:9px;">
+            <span style="font-size:1.3rem;">⚡</span>
+            <div>
+              <p style="font-weight:600; font-size:0.88rem; color:#fb923c;">Crisis Response · 위기 대응</p>
+              <p style="font-size:0.73rem; color:rgba(201,211,220,0.48);">압박 속에서 가장 빛나는 침착함</p>
+            </div>
+            <span style="margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:#fb923c; font-weight:600;">93%</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="--w:93%; background:linear-gradient(90deg,#fb923c,#f97316);"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         FEATURED VIDEO
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <p class="section-label">// featured.video</p>
+      <div class="istp-card" style="overflow:hidden; padding:0;">
+        <div style="position:relative; padding-bottom:56.25%; height:0;">
+          <iframe
+            style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+            src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+            title="ISTP Featured Video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div style="padding:13px 15px;">
+          <p style="font-weight:600; font-size:0.86rem; color:#38bdf8; margin-bottom:4px;">🔧 The Virtuoso's Workshop — 조용한 장인의 세계</p>
+          <div style="display:flex; align-items:center; gap:11px;">
+            <span style="font-size:0.7rem; color:rgba(201,211,220,0.4);">👁 31.7K</span>
+            <span style="font-size:0.7rem; color:rgba(201,211,220,0.4);">❤️ 2.9K</span>
+            <span style="margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:rgba(56,189,248,0.5);">ISTP.kr</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         VIDEO PLAYLIST
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <p class="section-label">// playlist</p>
+      <div class="istp-card" style="padding:7px;">
+        <div style="display:flex; flex-direction:column; gap:1px;">
+
+          <div style="display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='rgba(56,189,248,0.07)'" onmouseout="this.style.background='transparent'">
+            <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/default.jpg" alt="" style="width:62px;height:46px;object-fit:cover;border-radius:7px;flex-shrink:0;" />
+            <div style="flex:1;min-width:0;">
+              <p style="font-size:0.8rem;font-weight:500;color:#c9d3dc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">분해의 철학 — 뜯어봐야 알 수 있다</p>
+              <p style="font-size:0.7rem;color:rgba(201,211,220,0.35);margin-top:2px;">18.4K · 9:12</p>
+            </div>
+            <span style="font-size:0.9rem;color:rgba(56,189,248,0.55);flex-shrink:0;">▶</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='rgba(56,189,248,0.07)'" onmouseout="this.style.background='transparent'">
+            <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/default.jpg" alt="" style="width:62px;height:46px;object-fit:cover;border-radius:7px;flex-shrink:0;" />
+            <div style="flex:1;min-width:0;">
+              <p style="font-size:0.8rem;font-weight:500;color:#c9d3dc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">손이 기억하는 것들 — 근육 기억과 기술</p>
+              <p style="font-size:0.7rem;color:rgba(201,211,220,0.35);margin-top:2px;">14.1K · 11:38</p>
+            </div>
+            <span style="font-size:0.9rem;color:rgba(56,189,248,0.55);flex-shrink:0;">▶</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='rgba(56,189,248,0.07)'" onmouseout="this.style.background='transparent'">
+            <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/default.jpg" alt="" style="width:62px;height:46px;object-fit:cover;border-radius:7px;flex-shrink:0;" />
+            <div style="flex:1;min-width:0;">
+              <p style="font-size:0.8rem;font-weight:500;color:#c9d3dc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">침묵과 집중 — 혼자 작업하는 즐거움</p>
+              <p style="font-size:0.7rem;color:rgba(201,211,220,0.35);margin-top:2px;">8.7K · 7:55</p>
+            </div>
+            <span style="font-size:0.9rem;color:rgba(56,189,248,0.55);flex-shrink:0;">▶</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         IMAGE CAROUSEL
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <p class="section-label">// gallery</p>
+      <div class="carousel-wrap" id="carousel">
+        <div class="carousel-track" id="carouselTrack">
+
+          <div class="carousel-slide">
+            <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=480&q=80" alt="Workshop" />
+            <div style="position:absolute;bottom:0;left:0;right:0;padding:11px 14px;background:linear-gradient(to top,rgba(8,11,14,0.75),transparent);">
+              <p style="font-size:0.78rem;font-weight:600;color:#c9d3dc;">🔧 작업실</p>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="https://images.unsplash.com/photo-1581092160562-40aa08e80d4c?w=480&q=80" alt="Precision" />
+            <div style="position:absolute;bottom:0;left:0;right:0;padding:11px 14px;background:linear-gradient(to top,rgba(8,11,14,0.75),transparent);">
+              <p style="font-size:0.78rem;font-weight:600;color:#c9d3dc;">🎯 정밀 작업</p>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=480&q=80" alt="Tools" />
+            <div style="position:absolute;bottom:0;left:0;right:0;padding:11px 14px;background:linear-gradient(to top,rgba(8,11,14,0.75),transparent);">
+              <p style="font-size:0.78rem;font-weight:600;color:#c9d3dc;">⚙️ 도구들</p>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=480&q=80" alt="Circuit" />
+            <div style="position:absolute;bottom:0;left:0;right:0;padding:11px 14px;background:linear-gradient(to top,rgba(8,11,14,0.75),transparent);">
+              <p style="font-size:0.78rem;font-weight:600;color:#c9d3dc;">💡 회로와 논리</p>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=480&q=80" alt="Focused Work" />
+            <div style="position:absolute;bottom:0;left:0;right:0;padding:11px 14px;background:linear-gradient(to top,rgba(8,11,14,0.75),transparent);">
+              <p style="font-size:0.78rem;font-weight:600;color:#c9d3dc;">🌑 집중의 시간</p>
+            </div>
+          </div>
+
+        </div>
+        <button class="carousel-btn carousel-prev" id="carouselPrev" aria-label="Previous">‹</button>
+        <button class="carousel-btn carousel-next" id="carouselNext" aria-label="Next">›</button>
+      </div>
+      <div class="carousel-dots" id="carouselDots"></div>
+    </section>
+
+    <!-- ══════════════════
+         SPOTLIGHT IMAGE
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <p class="section-label">// feature.build</p>
+      <div class="spotlight-hover istp-card" style="border:0;">
+        <img src="https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=480&q=80" alt="ISTP Build" style="height:196px;" />
+        <div class="spotlight-overlay">
+          <span style="font-size:0.82rem;font-weight:600;color:#c9d3dc;background:rgba(56,189,248,0.6);padding:5px 13px;border-radius:99px;font-family:'JetBrains Mono',monospace;">빌드 보기 →</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         MUSIC PLAYER
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <p class="section-label">// now.playing</p>
+      <div class="istp-card" style="padding:18px;">
+        <div style="display:flex;align-items:center;gap:15px;margin-bottom:13px;">
+          <div class="vinyl" id="vinyl"></div>
+          <div style="flex:1;min-width:0;">
+            <p style="font-weight:600;font-size:0.88rem;color:#38bdf8;margin-bottom:2px;">Quiet Mechanism</p>
+            <p style="font-size:0.73rem;color:rgba(201,211,220,0.45);margin-bottom:7px;">ISTP Ambient Vol.3</p>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+          </div>
+          <button onclick="toggleMusic()" id="playBtn" style="
+            width:40px;height:40px;border-radius:50%;
+            background:linear-gradient(135deg,#38bdf8,#4ade80);
+            border:none;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            font-size:1rem;flex-shrink:0;
+            box-shadow:0 0 14px rgba(56,189,248,0.35);
+            transition:transform 0.2s;
+          ">▶</button>
+        </div>
+        <!-- Tracklist -->
+        <div style="border-top:1px solid rgba(56,189,248,0.10);padding-top:11px;display:flex;flex-direction:column;gap:7px;">
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:0.76rem;color:rgba(201,211,220,0.55);">1. Quiet Mechanism</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#38bdf8;">4:06</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:0.76rem;color:rgba(201,211,220,0.35);">2. Steel Silence</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:rgba(201,211,220,0.3);">3:51</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:0.76rem;color:rgba(201,211,220,0.35);">3. Cold Precision</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:rgba(201,211,220,0.3);">5:17</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         PROJECT CARDS
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <p class="section-label">// projects</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;">
+
+        <div class="istp-card" style="padding:15px;">
+          <span style="font-size:1.4rem;display:block;margin-bottom:7px;">🔩</span>
+          <p style="font-weight:600;font-size:0.8rem;color:#38bdf8;margin-bottom:3px;">Tool Lab</p>
+          <p style="font-size:0.7rem;color:rgba(201,211,220,0.45);line-height:1.5;">직접 만든 도구와 장치 아카이브</p>
+        </div>
+
+        <div class="istp-card" style="padding:15px;">
+          <span style="font-size:1.4rem;display:block;margin-bottom:7px;">🗺️</span>
+          <p style="font-weight:600;font-size:0.8rem;color:#4ade80;margin-bottom:3px;">System Map</p>
+          <p style="font-size:0.7rem;color:rgba(201,211,220,0.45);line-height:1.5;">복잡한 시스템을 도식화한 기록</p>
+        </div>
+
+        <div class="istp-card" style="padding:15px;">
+          <span style="font-size:1.4rem;display:block;margin-bottom:7px;">⚡</span>
+          <p style="font-weight:600;font-size:0.8rem;color:#fb923c;margin-bottom:3px;">Crisis Kit</p>
+          <p style="font-size:0.7rem;color:rgba(201,211,220,0.45);line-height:1.5;">긴급 상황 대응 프레임워크</p>
+        </div>
+
+        <div class="istp-card" style="padding:15px;">
+          <span style="font-size:1.4rem;display:block;margin-bottom:7px;">🌑</span>
+          <p style="font-weight:600;font-size:0.8rem;color:#94a3b8;margin-bottom:3px;">Solo Mode</p>
+          <p style="font-size:0.7rem;color:rgba(201,211,220,0.45);line-height:1.5;">혼자만의 깊은 몰입 작업 일지</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         RECENT POSTS
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <p class="section-label" style="margin-bottom:0;">// recent.log</p>
+        <a href="#" style="font-size:0.7rem;color:rgba(56,189,248,0.55);text-decoration:none;font-family:'JetBrains Mono',monospace;">all →</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px;">
+
+        <div class="istp-card" style="padding:13px 15px;cursor:pointer;">
+          <p style="font-size:0.83rem;font-weight:600;color:#c9d3dc;margin-bottom:5px;">왜 나는 설명서를 읽지 않는가</p>
+          <p style="font-size:0.73rem;color:rgba(201,211,220,0.45);line-height:1.5;">직접 해봐야 안다. ISTP의 체험 중심 학습에 대한 고찰.</p>
+          <div style="display:flex;gap:7px;margin-top:7px;align-items:center;">
+            <span class="tag-pill" style="background:rgba(56,189,248,0.10);border-color:rgba(56,189,248,0.25);color:#38bdf8;font-size:0.62rem;">학습</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:rgba(201,211,220,0.28);margin-left:auto;">2026.02.21</span>
+          </div>
+        </div>
+
+        <div class="istp-card" style="padding:13px 15px;cursor:pointer;">
+          <p style="font-size:0.83rem;font-weight:600;color:#c9d3dc;margin-bottom:5px;">고독은 약점이 아니다 — ISTP의 혼자 있는 시간</p>
+          <p style="font-size:0.73rem;color:rgba(201,211,220,0.45);line-height:1.5;">침묵 속에서 재충전하는 사람들의 내면 세계.</p>
+          <div style="display:flex;gap:7px;margin-top:7px;align-items:center;">
+            <span class="tag-pill" style="background:rgba(74,222,128,0.10);border-color:rgba(74,222,128,0.25);color:#4ade80;font-size:0.62rem;">내향</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:rgba(201,211,220,0.28);margin-left:auto;">2026.02.15</span>
+          </div>
+        </div>
+
+        <div class="istp-card" style="padding:13px 15px;cursor:pointer;">
+          <p style="font-size:0.83rem;font-weight:600;color:#c9d3dc;margin-bottom:5px;">완벽한 도구를 찾아서 — 장인의 집착</p>
+          <p style="font-size:0.73rem;color:rgba(201,211,220,0.45);line-height:1.5;">최고의 결과를 위해 최고의 도구를 고집하는 이유.</p>
+          <div style="display:flex;gap:7px;margin-top:7px;align-items:center;">
+            <span class="tag-pill" style="background:rgba(251,146,60,0.10);border-color:rgba(251,146,60,0.25);color:#fb923c;font-size:0.62rem;">도구</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:rgba(201,211,220,0.28);margin-left:auto;">2026.02.09</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         FAQ ACCORDION
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <p class="section-label">// faq.md</p>
+      <div class="istp-card" style="padding:7px;display:flex;flex-direction:column;gap:2px;">
+
+        <details style="border-radius:9px;overflow:hidden;">
+          <summary style="padding:13px 14px;font-size:0.83rem;font-weight:500;color:#c9d3dc;display:flex;justify-content:space-between;align-items:center;">
+            <span>ISTP는 어떤 유형인가요?</span>
+            <span class="faq-arrow" style="color:#38bdf8;font-size:0.72rem;">▼</span>
+          </summary>
+          <div style="padding:0 14px 12px;font-size:0.76rem;color:rgba(201,211,220,0.55);line-height:1.75;">
+            ISTP는 내향(I)·감각(S)·사고(T)·인식(P)의 조합으로, 전체 인구의 약 5~9%입니다. "버추오소"라는 별명처럼 손과 논리로 세상을 탐구하며, 조용하지만 위기 상황에서 가장 빠르게 움직이는 유형입니다.
+          </div>
+        </details>
+
+        <details style="border-radius:9px;overflow:hidden;">
+          <summary style="padding:13px 14px;font-size:0.83rem;font-weight:500;color:#c9d3dc;display:flex;justify-content:space-between;align-items:center;">
+            <span>ISTP의 핵심 강점은 무엇인가요?</span>
+            <span class="faq-arrow" style="color:#38bdf8;font-size:0.72rem;">▼</span>
+          </summary>
+          <div style="padding:0 14px 12px;font-size:0.76rem;color:rgba(201,211,220,0.55);line-height:1.75;">
+            냉정한 문제 분석 능력, 뛰어난 공간·기계 감각, 그리고 압박 상황에서의 즉각적인 대응 능력입니다. 말보다 행동이 앞서며, 실질적인 해결책을 즉흥적으로 도출해냅니다.
+          </div>
+        </details>
+
+        <details style="border-radius:9px;overflow:hidden;">
+          <summary style="padding:13px 14px;font-size:0.83rem;font-weight:500;color:#c9d3dc;display:flex;justify-content:space-between;align-items:center;">
+            <span>istp.kr에 연락하려면?</span>
+            <span class="faq-arrow" style="color:#38bdf8;font-size:0.72rem;">▼</span>
+          </summary>
+          <div style="padding:0 14px 12px;font-size:0.76rem;color:rgba(201,211,220,0.55);line-height:1.75;">
+            <a href="mailto:hello@istp.kr" style="color:#38bdf8;text-decoration:none;font-family:'JetBrains Mono',monospace;">hello@istp.kr</a>로 직접 이메일을 보내거나, 아래 폼을 이용해 주세요. 간결하게 써주시면 빠르게 확인합니다.
+          </div>
+        </details>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         NEWSLETTER
+    ══════════════════ -->
+    <section style="margin-bottom:32px;" class="reveal">
+      <p class="section-label">// subscribe</p>
+      <div class="istp-card" style="padding:20px 18px;">
+        <p style="font-family:'Noto Serif KR',serif;font-size:0.98rem;font-weight:600;color:#38bdf8;margin-bottom:5px;">작업실 뒤편 이야기 받아보기</p>
+        <p style="font-size:0.76rem;color:rgba(201,211,220,0.45);margin-bottom:14px;line-height:1.65;">공개하지 않은 빌드 로그, 분석 노트, ISTP 관찰 기록을 뉴스레터로 보내드립니다.</p>
+        <div id="subForm" style="display:flex;flex-direction:column;gap:9px;">
+          <input type="email" id="subEmail" placeholder="your@email.com" class="form-input" />
+          <button onclick="doSubscribe()" style="
+            padding:10px;border-radius:9px;
+            background:linear-gradient(135deg,#38bdf8,#4ade80);
+            border:none;cursor:pointer;
+            font-weight:600;font-size:0.85rem;color:#080b0e;
+            font-family:'JetBrains Mono',monospace;
+            transition:opacity 0.2s;
+          " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+            ⚙️ 빌드 로그 구독하기
+          </button>
+        </div>
+        <div id="subSuccess" style="display:none;text-align:center;padding:11px;">
+          <p style="font-size:0.83rem;color:#4ade80;font-family:'JetBrains Mono',monospace;">✓ 구독 완료 — 다음 로그를 기다려 주세요.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         CONTACT FORM
+    ══════════════════ -->
+    <section style="margin-bottom:40px;" class="reveal">
+      <p class="section-label">// contact.init()</p>
+      <div class="istp-card" style="padding:20px 18px;">
+        <p style="font-family:'Noto Serif KR',serif;font-size:0.98rem;font-weight:600;color:#38bdf8;margin-bottom:5px;">함께 만들어볼 것이 있나요?</p>
+        <p style="font-size:0.76rem;color:rgba(201,211,220,0.45);margin-bottom:14px;line-height:1.65;">콜라보, 기술 논의, 단순한 인사 — 무엇이든 간결하게 보내주세요.</p>
+        <div id="contactForm" style="display:flex;flex-direction:column;gap:9px;">
+          <input type="text"  id="contactName"  placeholder="이름" class="form-input" />
+          <input type="email" id="contactEmail" placeholder="이메일" class="form-input" />
+          <select id="contactTopic" class="form-input" style="appearance:none;-webkit-appearance:none;">
+            <option value="" disabled selected style="background:#0f1923;">주제 선택</option>
+            <option value="build"    style="background:#0f1923;">🔧 공동 빌드</option>
+            <option value="consult"  style="background:#0f1923;">🧠 기술 자문</option>
+            <option value="collab"   style="background:#0f1923;">⚙️ 콜라보레이션</option>
+            <option value="other"    style="background:#0f1923;">💬 기타</option>
+          </select>
+          <textarea id="contactMsg" placeholder="메시지 (간결할수록 좋습니다)" class="form-input" style="resize:vertical;min-height:86px;"></textarea>
+          <button onclick="doContact()" style="
+            padding:10px;border-radius:9px;
+            background:linear-gradient(135deg,#38bdf8,#4ade80);
+            border:none;cursor:pointer;
+            font-weight:600;font-size:0.85rem;color:#080b0e;
+            font-family:'JetBrains Mono',monospace;
+            transition:opacity 0.2s;
+          " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+            송신하기 ⚡
+          </button>
+        </div>
+        <div id="contactSuccess" style="display:none;text-align:center;padding:13px;">
+          <p style="font-size:0.83rem;color:#4ade80;font-family:'JetBrains Mono',monospace;">✓ 수신 완료 — 곧 응답하겠습니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════
+         FOOTER
+    ══════════════════ -->
+    <footer style="text-align:center;padding-top:22px;border-top:1px solid rgba(56,189,248,0.10);" class="reveal">
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin-bottom:14px;">
+        <span class="tag-pill" style="background:rgba(56,189,248,0.10);border-color:rgba(56,189,248,0.28);color:#38bdf8;">Introverted</span>
+        <span class="tag-pill" style="background:rgba(148,163,184,0.10);border-color:rgba(148,163,184,0.25);color:#94a3b8;">Sensing</span>
+        <span class="tag-pill" style="background:rgba(74,222,128,0.10);border-color:rgba(74,222,128,0.25);color:#4ade80;">Thinking</span>
+        <span class="tag-pill" style="background:rgba(251,146,60,0.10);border-color:rgba(251,146,60,0.25);color:#fb923c;">Perceiving</span>
+      </div>
+      <p style="font-family:'Noto Serif KR',serif;font-size:0.85rem;color:rgba(201,211,220,0.38);margin-bottom:7px;">
+        분해하고, 이해하고, 다시 만든다.
+      </p>
+      <a href="https://istp.kr" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#38bdf8;text-decoration:none;letter-spacing:0.06em;">istp.kr</a>
+      <p style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:rgba(201,211,220,0.18);margin-top:11px;">
+        I · S · T · P · Made with Tailwind CSS 4
+      </p>
+    </footer>
+
+  </div><!-- /main wrapper -->
+
+  <script>
+    /* ══ Particles — metallic sparks & fragments ══ */
+    (function () {
+      const layer  = document.getElementById('particle-layer');
+      const colors = ['#38bdf8','#4ade80','#94a3b8','#fb923c','#e2e8f0','#0ea5e9','#22c55e'];
+
+      for (let i = 0; i < 48; i++) {
+        const p    = document.createElement('div');
+        p.className = 'particle';
+        const size  = 2 + Math.random() * 5;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const isRect = Math.random() > 0.6;
+        const tx    = (Math.random() - 0.5) * 120;
+        const ty    = -(80 + Math.random() * 160);
+        const rot   = Math.random() * 360;
+
+        p.style.cssText = `
+          width:${size}px; height:${isRect ? size * 2 : size}px;
+          left:${Math.random() * 100}%;
+          top:${20 + Math.random() * 80}%;
+          background:${color};
+          border-radius:${isRect ? '2px' : '50%'};
+          --dur:${7 + Math.random() * 11}s;
+          --delay:${Math.random() * 9}s;
+          --max-op:${0.25 + Math.random() * 0.45};
+          --tx:${tx}px;
+          --ty:${ty}px;
+          --rot:${rot}deg;
+          box-shadow:0 0 ${3 + Math.random()*4}px ${color};
+        `;
+        layer.appendChild(p);
+      }
+    })();
+
+    /* ══ Scroll Reveal + Bar Animations ══ */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          e.target.querySelectorAll('.bar-fill').forEach(bar => {
+            const w = bar.style.getPropertyValue('--w');
+            if (w) bar.style.width = w;
+          });
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    /* ══ Carousel ══ */
+    const track    = document.getElementById('carouselTrack');
+    const slides   = track ? track.querySelectorAll('.carousel-slide') : [];
+    const dotsWrap = document.getElementById('carouselDots');
+    let current    = 0, autoTimer, touchStartX = 0;
+
+    if (slides.length) {
+      slides.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+        dot.addEventListener('click', () => gotoSlide(i));
+        dotsWrap.appendChild(dot);
+      });
+
+      function gotoSlide(n) {
+        current = (n + slides.length) % slides.length;
+        track.style.transform = `translateX(-${current * 100}%)`;
+        dotsWrap.querySelectorAll('.carousel-dot').forEach((d, i) =>
+          d.classList.toggle('active', i === current));
+      }
+
+      function startAuto() { autoTimer = setInterval(() => gotoSlide(current + 1), 4200); }
+      function stopAuto()  { clearInterval(autoTimer); }
+
+      document.getElementById('carouselPrev')?.addEventListener('click', () => { stopAuto(); gotoSlide(current - 1); startAuto(); });
+      document.getElementById('carouselNext')?.addEventListener('click', () => { stopAuto(); gotoSlide(current + 1); startAuto(); });
+
+      const cw = document.getElementById('carousel');
+      cw.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; stopAuto(); }, { passive: true });
+      cw.addEventListener('touchend',   e => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(dx) > 38) gotoSlide(dx < 0 ? current + 1 : current - 1);
+        startAuto();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft')  gotoSlide(current - 1);
+        if (e.key === 'ArrowRight') gotoSlide(current + 1);
+      });
+      cw.addEventListener('mouseenter', stopAuto);
+      cw.addEventListener('mouseleave', startAuto);
+      startAuto();
+    }
+
+    /* ══ Music Player ══ */
+    let playing = false;
+    function toggleMusic() {
+      playing = !playing;
+      const vinyl = document.getElementById('vinyl');
+      const btn   = document.getElementById('playBtn');
+      const prog  = document.getElementById('progressFill');
+      if (playing) {
+        vinyl.classList.add('vinyl-spin');
+        prog.classList.add('progress-anim');
+        btn.textContent = '⏸';
+        btn.style.background = 'linear-gradient(135deg,#4ade80,#38bdf8)';
+      } else {
+        vinyl.classList.remove('vinyl-spin');
+        prog.classList.remove('progress-anim');
+        btn.textContent = '▶';
+        btn.style.background = 'linear-gradient(135deg,#38bdf8,#4ade80)';
+      }
+    }
+
+    /* ══ Forms ══ */
+    function doSubscribe() {
+      const email = document.getElementById('subEmail').value.trim();
+      if (!email || !email.includes('@')) {
+        document.getElementById('subEmail').style.borderColor = '#f43f5e';
+        return;
+      }
+      document.getElementById('subForm').style.display    = 'none';
+      document.getElementById('subSuccess').style.display = 'block';
+    }
+
+    function doContact() {
+      const name  = document.getElementById('contactName').value.trim();
+      const email = document.getElementById('contactEmail').value.trim();
+      const msg   = document.getElementById('contactMsg').value.trim();
+      if (!name || !email || !msg) return;
+      document.getElementById('contactForm').style.display   = 'none';
+      document.getElementById('contactSuccess').style.display = 'block';
+    }
+  </script>
+
+</body>
+</html>
